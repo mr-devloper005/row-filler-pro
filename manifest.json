@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "RowFiller",
+  "version": "1.0",
+  "permissions": [
+    "storage",
+    "scripting",
+    "activeTab",
+    "tabs",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "*://*.pinterest.com/*",
+    "*://pixabay.com/*",
+    "*://*.canva.com/*",
+    "*://*.imgbb.com/*",
+    "*://*.imgur.com/*",
+    "*://*.diigo.com/*",
+    "*://*.500px.com/*",
+    "*://*.tumblr.com/*",
+    "*://*.medium.com/*",
+    "*://*.gifyu.com/*",
+    "*://*.penzu.com/*"
+  ],
+  "action": {
+    "default_title": "Open RowFiller SidePanel"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.pinterest.com/*",
+        "*://pixabay.com/*",
+        "*://*.canva.com/*",
+        "*://*.imgbb.com/*",
+        "*://*.imgur.com/*",
+        "*://*.diigo.com/*",
+        "*://*.500px.com/*",
+        "*://*.tumblr.com/*",
+        "*://*.medium.com/*",
+        "*://*.gifyu.com/*",
+        "*://*.penzu.com/*"
+      ],
+      "js": [
+        "content/utils.js",
+        "content/sites/pinterest.js",
+        "content/sites/medium.js",
+        "content/index.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

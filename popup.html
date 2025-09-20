@@ -1,0 +1,549 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>RowFiller Pro</title>
+  <!-- <style>
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #2d3748 0%, #4a5568 50%, #2d3748 100%);
+      color: #e2e8f0;
+      margin: 0;
+      padding: 0;
+      width: 500px;
+      height: 500px;
+      overflow: hidden;
+    }
+    
+    .container { 
+      padding: 20px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    h3 {
+      margin: 0 0 24px;
+      font-size: 24px;
+      font-weight: 800;
+      text-align: center;
+      background: linear-gradient(135deg, #a78bfa 0%, #c084fc 50%, #e879f9 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .section {
+      margin: 16px 0;
+      background: rgba(45, 55, 72, 0.85);
+      backdrop-filter: blur(15px);
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      border: 1px solid rgba(167, 139, 250, 0.2);
+    }
+    
+    .section.small {
+      padding: 16px;
+    }
+    
+    label {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 8px;
+      display: block;
+      color: #cbd5e0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    input[type=file] {
+      width: 100%;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+      border-radius: 12px;
+      border: 2px solid rgba(167, 139, 250, 0.3);
+      cursor: pointer;
+      font-size: 14px;
+      color: #e2e8f0;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    input[type=file]:hover { 
+      background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+      border-color: #a78bfa;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(167, 139, 250, 0.2);
+    }
+    
+    input[type=file]:focus {
+      outline: none;
+      border-color: #a78bfa;
+      box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+    }
+
+    /* Rows container with scroll */
+    #rowsContainer {
+      max-height: 250px;
+      overflow-y: auto;
+      border-radius: 12px;
+      padding: 4px;
+      background: rgba(45, 55, 72, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(167, 139, 250, 0.2);
+    }
+    
+    /* Custom scrollbar */
+    #rowsContainer::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    #rowsContainer::-webkit-scrollbar-track {
+      background: rgba(45, 55, 72, 0.3);
+      border-radius: 4px;
+    }
+    
+    #rowsContainer::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%);
+      border-radius: 4px;
+    }
+    
+    #rowsContainer::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #c084fc 0%, #e879f9 100%);
+    }
+    
+    .row-item {
+      padding: 16px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      background: rgba(74, 85, 104, 0.6);
+      backdrop-filter: blur(15px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid rgba(167, 139, 250, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .row-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(135deg, #a78bfa 0%, #c084fc 50%, #e879f9 100%);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+    
+    .row-item:hover {
+      background: rgba(74, 85, 104, 0.8);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(167, 139, 250, 0.2);
+      border-color: rgba(167, 139, 250, 0.5);
+    }
+    
+    .row-item:hover::before {
+      transform: scaleX(1);
+    }
+    
+    .row-item.selected {
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.2) 0%, rgba(192, 132, 252, 0.2) 100%);
+      border-color: #a78bfa;
+      box-shadow: 0 8px 24px rgba(167, 139, 250, 0.3);
+    }
+    
+    .row-item.selected::before {
+      transform: scaleX(1);
+    }
+    
+    .row-title {
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #e2e8f0;
+      background: linear-gradient(135deg, #a78bfa 0%, #c084fc 50%, #e879f9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .row-description {
+      font-size: 13px;
+      color: #cbd5e0;
+      line-height: 1.5;
+      margin-bottom: 6px;
+      background: rgba(167, 139, 250, 0.1);
+      padding: 8px;
+      border-radius: 8px;
+      border-left: 3px solid #a78bfa;
+    }
+    
+    .row-link {
+      font-size: 12px;
+      color: #a0aec0;
+      margin-bottom: 6px;
+      font-style: italic;
+    }
+    
+    .row-tags {
+      font-size: 12px;
+      color: #e879f9;
+      font-weight: 600;
+      background: rgba(232, 121, 249, 0.15);
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    .actions button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #a78bfa 0%, #c084fc 50%, #e879f9 100%);
+      color: #2d3748;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 16px rgba(167, 139, 250, 0.3);
+    }
+    
+    .actions button:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(167, 139, 250, 0.5);
+    }
+    
+    .actions button:active {
+      transform: translateY(0);
+    }
+
+    .status {
+      font-size: 13px;
+      margin-top: 12px;
+      text-align: center;
+      color: #e2e8f0;
+      font-weight: 500;
+      background: rgba(45, 55, 72, 0.8);
+      padding: 8px 12px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(167, 139, 250, 0.2);
+    }
+    
+    .footer {
+      font-size: 11px;
+      color: rgba(226, 232, 240, 0.8);
+      margin-top: 16px;
+      text-align: center;
+      background: rgba(45, 55, 72, 0.6);
+      padding: 8px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(167, 139, 250, 0.1);
+    }
+    
+    
+    .website-status {
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.15) 0%, rgba(192, 132, 252, 0.15) 100%);
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 4px solid #a78bfa;
+      font-size: 13px;
+      color: #cbd5e0;
+    }
+    
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .status-icon {
+      font-size: 16px;
+    }
+    
+    .status-text {
+      font-weight: 500;
+    }
+    
+    .website-status.supported {
+      border-left-color: #10b981;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(34, 197, 94, 0.15) 100%);
+    }
+    
+    .website-status.unsupported {
+      border-left-color: #ef4444;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(248, 113, 113, 0.15) 100%);
+    }
+    
+    .website-status.supported .status-icon {
+      color: #10b981;
+    }
+    
+    .website-status.unsupported .status-icon {
+      color: #ef4444;
+    }
+  </style> -->
+
+  <style>
+  * {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #2d3748 0%, #4a5568 50%, #2d3748 100%);
+  color: #e2e8f0;
+  margin: 0;
+  padding: 0;
+  width: 100%;         /* 🔹 full responsive */
+  height: 100%;        /* 🔹 full responsive */
+  overflow-y: auto;    /* 🔹 allow scroll */
+}
+
+/* Hide scrollbar for full extension window */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;   /* ✅ scrollbar hat gaya */
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #1e1e2f, #2a2a40);
+  color: #fff;
+  box-sizing: border-box;
+}
+
+/* Agar andar koi container scroll karna ho to sirf usme allow karo */
+#rowsContainer {
+  max-height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+}
+
+#rowsContainer::-webkit-scrollbar {
+  display: none; /* Chrome, Edge, Safari */
+}
+
+
+.container { 
+  padding: 16px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h3 {
+  margin: 0 0 16px;
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  background: linear-gradient(135deg, #a78bfa 0%, #c084fc 50%, #e879f9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.section {
+  margin: 12px 0;
+  background: rgba(45, 55, 72, 0.85);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(167, 139, 250, 0.2);
+}
+
+label {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 6px;
+  display: block;
+  color: #cbd5e0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+input[type=file] {
+  width: 100%;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+  border-radius: 10px;
+  border: 2px solid rgba(167, 139, 250, 0.3);
+  font-size: 13px;
+  color: #e2e8f0;
+  cursor: pointer;
+}
+
+/* Container for parsed rows */
+#rowsContainer {
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 12px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(30, 30, 46, 0.95), rgba(50, 50, 70, 0.85));
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  scrollbar-width: none;   /* Firefox ke liye */
+}
+
+/* Chrome, Edge, Safari me scrollbar hide */
+#rowsContainer::-webkit-scrollbar {
+  display: none;
+}
+
+/* Each row like a premium card */
+.row-item {
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(55, 65, 81, 0.85), rgba(31, 41, 55, 0.9));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+
+/* Hover effect – lift card */
+.row-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+  background: linear-gradient(145deg, rgba(74, 85, 104, 0.9), rgba(55, 65, 81, 0.95));
+}
+
+/* Title */
+.row-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+}
+
+/* Description */
+.row-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #e5e7eb;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(167, 139, 250, 0.15);
+  border-left: 4px solid #a78bfa;
+}
+
+/* Link */
+.row-link {
+  font-size: 13px;
+  color: #31cfff;
+  text-decoration: none;
+  font-style: italic;
+}
+
+/* Tags */
+.row-tags {
+  font-size: 13px;
+  font-weight: 600;
+  color: #00fa9a;
+  background: rgba(244, 114, 182, 0.18);
+  padding: 5px 12px;
+  border-radius: 8px;
+  display: inline-block;
+  align-self: flex-start;
+}
+
+
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.actions button {
+  flex: 1;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #a78bfa, #e879f9);
+  color: #2d3748;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.status {
+  font-size: 12px;
+  margin-top: 10px;
+  text-align: center;
+  color: #e2e8f0;
+}
+
+.footer {
+  font-size: 11px;
+  color: rgba(226, 232, 240, 0.8);
+  margin-top: 12px;
+  text-align: center;
+  padding: 6px;
+  background: rgba(45, 55, 72, 0.6);
+  border-radius: 6px;
+}
+</style>
+</head>
+<body>
+  <div class="container">
+    <h3>RowFiller Pro</h3>
+
+    <div class="section">
+      <label>Upload .xlsx/.xls/.csv</label>
+      <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" />
+    </div>
+
+    <div class="section small">
+      <label>Website Support Status</label>
+      <div id="websiteStatus" class="website-status">
+        <div class="status-indicator">
+          <span class="status-icon">🔍</span>
+          <span class="status-text">Checking website support...</span>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="section">
+      <label>Parsed rows</label>
+      <div id="rowsContainer">Loading saved data...</div>
+    </div>
+
+    <div class="actions">
+      <button id="clearAll">Clear All</button>
+      <button id="refreshData">Refresh Data</button>
+    </div>
+
+    <div id="status" class="status"></div>
+    <div class="footer">
+      Upload your file, select a row, and autofill on supported websites.
+    </div>
+  </div>
+
+  <script src="xlsx.full.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
