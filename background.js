@@ -16,23 +16,31 @@ chrome.action.onClicked.addListener(async (tab) => {
     console.warn("SidePanel open failed (maybe unsupported):", err);
   }
 });
-
-// Forward triggerAuthFill to content script (auth.js already injected on pages)
+// background.js - replace the triggerAuthFill handler with this
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg && msg.action === "triggerAuthFill") {
-    // Send message to the tab's content script that will handle autofill.
-    chrome.tabs.sendMessage(msg.tabId, { action: "autofillAuth" }, (resp) => {
-      if (chrome.runtime.lastError) {
-        console.error(
-          "sendMessage to tab failed:",
-          chrome.runtime.lastError.message
-        );
-        sendResponse({ ok: false, error: chrome.runtime.lastError.message });
-      } else {
-        sendResponse(resp);
+  if (msg && msg.action === "triggerAuthFill" && msg.tabId) {
+    const tabId = msg.tabId;
+    // inject auth.js into the tab first (if not already)
+    chrome.scripting.executeScript(
+      { target: { tabId }, files: ["content/auth.js"] },
+      (injectionResults) => {
+        // Always attempt to send message after injection (or if injection fails, still try)
+        chrome.tabs.sendMessage(tabId, { action: "autofillAuth" }, (resp) => {
+          if (chrome.runtime.lastError) {
+            console.error(
+              "sendMessage failed:",
+              chrome.runtime.lastError.message
+            );
+            sendResponse({
+              ok: false,
+              error: chrome.runtime.lastError.message,
+            });
+          } else {
+            sendResponse(resp || { ok: true });
+          }
+        });
       }
-    });
-    // Keep channel open for async response
-    return true;
+    );
+    return true; // keep channel open for async sendResponse
   }
 });

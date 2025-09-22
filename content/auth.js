@@ -1,9 +1,7 @@
 // content/auth.js
 (function () {
-  // debug log (should appear in page console when script injected)
-  console.log("🔑 Auth autofill script loaded");
+  console.log("🔑 content/auth.js loaded");
 
-  // Helper: set value correctly so React/Angular/Vue detect
   function setNativeValue(element, value) {
     try {
       const prototype = Object.getPrototypeOf(element);
@@ -29,14 +27,11 @@
         element.value = value;
       }
     } catch (e) {
-      // fallback
       element.value = value;
     }
-    // Trigger input event so frameworks pick it up
     element.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
-  // patterns to detect login/signup fields
   const patterns = {
     email: [/email/i, /e-mail/i, /user.?email/i, /\bmail\b/i],
     username: [/user(name)?/i, /login/i, /handle/i, /\buid\b/i],
@@ -51,6 +46,7 @@
         el.id,
         el.placeholder,
         el.getAttribute("aria-label"),
+        el.getAttribute("aria-labelledby"),
       ]
         .filter(Boolean)
         .join(" ");
@@ -59,65 +55,58 @@
       }
       if (el.type === "email") return "email";
       if (el.type === "password") return "password";
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
     return null;
   }
 
-  // Listen for autofill command from extension
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-    if (msg && msg.action === "autofillAuth") {
-      chrome.storage.local.get("profile", (res) => {
-        const profile = res && res.profile;
-        if (!profile) {
-          // nothing to fill
-          window.RowFiller?.showToast?.("❌ No profile saved");
-          return sendResponse({ ok: false, reason: "no_profile" });
-        }
+    if (!msg || msg.action !== "autofillAuth") return;
+    console.log("📩 content/auth.js received autofillAuth");
 
-        const activePass =
-          profile.activePassword === "submissionPassword"
-            ? profile.submissionPassword || ""
-            : profile.emailPassword || "";
+    chrome.storage.local.get("profile", (res) => {
+      const profile = res && res.profile;
+      if (!profile) {
+        console.warn("No profile found in storage");
+        sendResponse({ ok: false, reason: "no_profile" });
+        return;
+      }
 
-        const inputs = Array.from(document.querySelectorAll("input, textarea"));
-        let filledCount = 0;
+      const activePass =
+        profile.activePassword === "submissionPassword"
+          ? profile.submissionPassword || ""
+          : profile.emailPassword || "";
 
-        inputs.forEach((el) => {
-          try {
-            const role = matchField(el);
-            if (!role) return;
+      const inputs = Array.from(document.querySelectorAll("input, textarea"));
+      let filledCount = 0;
 
-            let value = null;
-            if (role === "password") {
-              value = activePass;
-            } else {
-              value = profile[role];
-            }
+      inputs.forEach((el) => {
+        try {
+          const role = matchField(el);
+          if (!role) return;
+          let value = null;
+          if (role === "password") value = activePass;
+          else value = profile[role];
 
-            if (value) {
-              el.focus && el.focus();
-              setNativeValue(el, value);
-              el.dispatchEvent(new Event("change", { bubbles: true }));
-              filledCount++;
-            }
-          } catch (err) {
-            // keep going
-            console.warn("RowFiller: fill field error", err);
+          if (value) {
+            el.focus && el.focus();
+            setNativeValue(el, value);
+            el.dispatchEvent(new Event("change", { bubbles: true }));
+            filledCount++;
           }
-        });
-
-        if (filledCount > 0) {
-          window.RowFiller?.showToast?.(`✅ Autofilled ${filledCount} fields`);
-          sendResponse({ ok: true, filled: filledCount });
-        } else {
-          window.RowFiller?.showToast?.("❌ No matching fields found");
-          sendResponse({ ok: false, reason: "no_fields" });
+        } catch (err) {
+          console.warn("Fill error for element", el, err);
         }
       });
-      // indicate async response
-      return true;
-    }
+
+      if (filledCount > 0) {
+        console.log(`✅ Autofilled ${filledCount} fields`);
+        sendResponse({ ok: true, filled: filledCount });
+      } else {
+        console.log("❌ No matching fields found");
+        sendResponse({ ok: false, reason: "no_fields" });
+      }
+    });
+
+    return true; // async response
   });
 })();

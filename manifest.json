@@ -11,7 +11,7 @@
   ],
   "host_permissions": [
     "*://*.pinterest.com/*",
-    "*://pixabay.com/*",
+    "*://*.pixabay.com/*",
     "*://*.canva.com/*",
     "*://*.imgbb.com/*",
     "*://*.imgur.com/*",
@@ -35,7 +35,7 @@
     {
       "matches": [
         "*://*.pinterest.com/*",
-        "*://pixabay.com/*",
+        "*://*.pixabay.com/*",
         "*://*.canva.com/*",
         "*://*.imgbb.com/*",
         "*://*.imgur.com/*",
@@ -50,7 +50,8 @@
         "content/utils.js",
         "content/sites/pinterest.js",
         "content/sites/medium.js",
-        "content/index.js"
+        "content/index.js",
+        "content/auth.js"
       ],
       "run_at": "document_idle"
     }
