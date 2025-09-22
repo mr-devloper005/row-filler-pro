@@ -98,9 +98,7 @@
 // popup.js (updated)
 // Requires xlsx.full.min.js in extension folder for .xlsx support.
 
-
-// 
-
+//
 
 // window.__ROW_FILLER_ROWS = []; // expose for debugging
 
@@ -343,7 +341,6 @@
 //     }
 //   });
 // }
-
 
 // function addDragDropToRow(div, rowIndex) {
 //   div.addEventListener("dragover", (e) => {
@@ -804,11 +801,467 @@
 // });
 // // ---------- End of popup.js ----------
 
+// window.__ROW_FILLER_ROWS = []; // expose for debugging
 
+// // DOM elements
+// let fileInput,
+//   rowsContainer,
+//   statusDiv,
+//   clearBtn,
+//   refreshDataBtn,
+//   websiteStatusDiv;
+
+// // Local storage key
+// const STORAGE_KEY = "rowfiller_parsed_data";
+
+// // ---------- Status ----------
+// function setStatus(msg, short = false) {
+//   if (statusDiv) {
+//     statusDiv.textContent = msg || "";
+//     if (!short) setTimeout(() => (statusDiv.textContent = ""), 4000);
+//   } else {
+//     console.log("RowFiller: Status:", msg);
+//   }
+// }
+
+// function checkWebsiteSupport() {
+//   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+//     if (!tabs || !tabs[0]) {
+//       updateWebsiteStatus("error", "❌", "No active tab found");
+//       return;
+//     }
+
+//     const tabUrl = tabs[0].url || "";
+//     let hostname = "unknown";
+//     try {
+//       hostname = new URL(tabUrl).hostname;
+//     } catch (e) {}
+
+//     const supportedSites = [
+//       "pinterest.com",
+//       "pixabay.com",
+//       "canva.com",
+//       "imgbb.com",
+//       "imgur.com",
+//       "diigo.com",
+//       "500px.com",
+//       "tumblr.com",
+//       "gifyu.com",
+//       "medium.com",
+//       "penzu.com",
+//     ];
+
+//     const matched = supportedSites.find((site) => hostname.includes(site));
+//     if (matched) {
+//       updateWebsiteStatus("supported", "✅", `Website supported: ${hostname}`);
+//     } else {
+//       updateWebsiteStatus(
+//         "unsupported",
+//         "❌",
+//         `Website not supported: ${hostname}`
+//       );
+//     }
+//   });
+// }
+
+// function updateWebsiteStatus(type, icon, text) {
+//   if (!websiteStatusDiv) return;
+//   const statusIcon = websiteStatusDiv.querySelector(".status-icon");
+//   const statusText = websiteStatusDiv.querySelector(".status-text");
+//   if (statusIcon) statusIcon.textContent = icon;
+//   if (statusText) statusText.textContent = text;
+//   websiteStatusDiv.className = `website-status ${type}`;
+// }
+
+// // ---------- Storage ----------
+// function saveToStorage(data) {
+//   return new Promise((resolve) => {
+//     chrome.storage.local.set({ [STORAGE_KEY]: data }, () => {
+//       if (chrome.runtime.lastError) {
+//         // fallback
+//         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+//         setStatus(`Saved to localStorage (${data.length} rows)`, true);
+//       } else {
+//         setStatus(`Saved to storage (${data.length} rows)`, true);
+//       }
+//       resolve(true);
+//     });
+//   });
+// }
+
+// function loadFromStorage() {
+//   return new Promise((resolve) => {
+//     chrome.storage.local.get([STORAGE_KEY], (result) => {
+//       if (chrome.runtime.lastError) {
+//         const localData = localStorage.getItem(STORAGE_KEY);
+//         resolve(localData ? JSON.parse(localData) : []);
+//       } else {
+//         resolve(result[STORAGE_KEY] || []);
+//       }
+//     });
+//   });
+// }
+
+// function clearStorage() {
+//   return new Promise((resolve) => {
+//     chrome.storage.local.remove([STORAGE_KEY], () => {
+//       localStorage.removeItem(STORAGE_KEY);
+//       resolve(true);
+//     });
+//   });
+// }
+
+// // ---------- File handling ----------
+// async function handleFile(e) {
+//   const f = e.target.files && e.target.files[0];
+//   if (!f) return setStatus("No file selected");
+//   try {
+//     const ab = await f.arrayBuffer();
+//     const workbook = XLSX.read(new Uint8Array(ab), { type: "array" });
+//     const sheet = workbook.Sheets[workbook.SheetNames[0]];
+//     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+//     processTableRows(rows);
+//   } catch (err) {
+//     console.error("Error reading file:", err);
+//     setStatus("Error reading file (check console)");
+//   }
+// }
+
+// // ---------- Parse table ----------
+// function processTableRows(rows) {
+//   if (!rows || !rows.length) return setStatus("No rows found");
+
+//   let headerIdx = -1;
+//   const headerCandidates = [
+//     "title",
+//     "description",
+//     "desc",
+//     "keyword",
+//     "target",
+//     "link",
+//     "url",
+//   ];
+//   for (let i = 0; i < Math.min(rows.length, 7); i++) {
+//     const rowLower = rows[i].map((c) => ("" + c).toLowerCase()).join("|");
+//     if (headerCandidates.some((h) => rowLower.includes(h))) {
+//       headerIdx = i;
+//       break;
+//     }
+//   }
+
+//   let header = null,
+//     dataRows = rows;
+//   if (headerIdx >= 0) {
+//     header = rows[headerIdx].map((h) => ("" + h).trim().toLowerCase());
+//     dataRows = rows.slice(headerIdx + 1);
+//     setStatus("Header detected", true);
+//   }
+
+//   const parsed = dataRows
+//     .filter((r) => r.some((c) => ("" + c).trim() !== ""))
+//     .map((r) => {
+//       let title = r[0] || "",
+//         description = r[1] || "",
+//         link = r[2] || "",
+//         tags = r[3] || "";
+//       if (header) {
+//         header.forEach((h, i) => {
+//           if (h.includes("title")) title = r[i];
+//           if (h.includes("desc")) description = r[i];
+//           if (h.includes("link") || h.includes("url") || h.includes("target"))
+//             link = r[i];
+//           if (h.includes("tag") || h.includes("keyword")) tags = r[i];
+//         });
+//       }
+//       return {
+//         title: (title || "").toString().trim(),
+//         description: (description || "").toString().trim(),
+//         link: (link || "").toString().trim(),
+//         tags: (tags || "").toString().trim(),
+//         imageData: null, // ✅ placeholder for dropped image
+//       };
+//     });
+
+//   window.__ROW_FILLER_ROWS = parsed;
+//   saveToStorage(parsed);
+//   renderRows(parsed);
+//   setStatus(`Parsed ${parsed.length} rows`, true);
+// }
+
+// // ---------- Drag & Drop Image ----------
+// function addDragDropToRow(div, rowIndex) {
+//   div.addEventListener("dragover", (e) => {
+//     e.preventDefault();
+//     div.style.borderColor = "#e879f9";
+//   });
+//   div.addEventListener("dragleave", (e) => {
+//     e.preventDefault();
+//     div.style.borderColor = "";
+//   });
+//   div.addEventListener("drop", async (e) => {
+//     e.preventDefault();
+//     div.style.borderColor = "";
+//     const files = e.dataTransfer.files;
+//     if (files && files.length > 0) {
+//       const file = files[0];
+//       if (!file.type.startsWith("image/"))
+//         return setStatus("❌ Please drop an image");
+//       const reader = new FileReader();
+//       reader.onload = (ev) => {
+//         window.__ROW_FILLER_ROWS[rowIndex].imageData = ev.target.result;
+//         saveToStorage(window.__ROW_FILLER_ROWS);
+//         renderRows(window.__ROW_FILLER_ROWS);
+//         setStatus(`✅ Image saved to row ${rowIndex + 1}`);
+//       };
+//       reader.readAsDataURL(file);
+//       return;
+//     }
+//     // If dropped from another page
+//     const url = e.dataTransfer.getData("text/uri-list") || "";
+//     if (!url) return setStatus("❌ Could not get image URL");
+//     try {
+//       const res = await fetch(url);
+//       const blob = await res.blob();
+//       const reader = new FileReader();
+//       reader.onloadend = () => {
+//         window.__ROW_FILLER_ROWS[rowIndex].imageData = reader.result;
+//         saveToStorage(window.__ROW_FILLER_ROWS);
+//         renderRows(window.__ROW_FILLER_ROWS);
+//         setStatus(`✅ Image saved to row ${rowIndex + 1}`);
+//       };
+//       reader.readAsDataURL(blob);
+//     } catch (err) {
+//       console.error("Image fetch failed", err);
+//       setStatus("❌ Failed to fetch dropped image");
+//     }
+//   });
+// }
+
+// // ---------- Render Rows ----------
+// function renderRows(rows) {
+//   rowsContainer.innerHTML = "";
+//   if (!rows || !rows.length) {
+//     rowsContainer.innerHTML = `<div style="text-align:center;color:#888;padding:20px;">No rows parsed yet</div>`;
+//     return;
+//   }
+//   rows.forEach((r, i) => {
+//     const div = document.createElement("div");
+//     div.className = "row-item";
+//     div.dataset.i = i;
+//     div.innerHTML = `
+//       ${
+//         r.imageData
+//           ? `<img src="${r.imageData}" style="max-height:60px;max-width:100px;margin-bottom:5px;border-radius:6px;display:block;">`
+//           : ""
+//       }
+//       <div class="row-title">${i + 1}. ${escapeHtml(
+//       r.title || "Untitled"
+//     )}</div>
+//       ${
+//         r.description
+//           ? `<div class="row-description">${escapeHtml(r.description)}</div>`
+//           : ""
+//       }
+//       ${r.link ? `<div class="row-link">🔗 ${escapeHtml(r.link)}</div>` : ""}
+//       ${r.tags ? `<div class="row-tags">🏷️ ${escapeHtml(r.tags)}</div>` : ""}
+//     `;
+//     addDragDropToRow(div, i);
+//     div.addEventListener("click", () => {
+//       document
+//         .querySelectorAll(".row-item")
+//         .forEach((el) => el.classList.remove("selected"));
+//       div.classList.add("selected");
+//       applyRow(i);
+//     });
+//     rowsContainer.appendChild(div);
+//   });
+// }
+// function escapeHtml(s) {
+//   return ("" + s).replace(
+//     /[&<>"]/g,
+//     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
+//   );
+// }
+
+// // ---------- Apply ----------
+// function applyRow(i) {
+//   const r = window.__ROW_FILLER_ROWS[i];
+//   if (!r) return setStatus("❌ Invalid row");
+//   setStatus("🚀 Applying...");
+//   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+//     if (!tabs[0]) return setStatus("❌ No active tab");
+//     chrome.tabs.sendMessage(
+//       tabs[0].id,
+//       { action: "applyRow", data: r },
+//       (resp) => {
+//         if (resp && resp.status) setStatus(`✅ ${resp.status}`, true);
+//         else setStatus("✅ Applied!", true);
+//       }
+//     );
+//   });
+// }
+
+// // ---------- Auto Load & Sync ----------
+// async function loadAndRender() {
+//   const saved = await loadFromStorage();
+//   window.__ROW_FILLER_ROWS = saved;
+//   renderRows(saved);
+//   if (saved.length)
+//     setStatus(`✅ Loaded ${saved.length} rows from storage`, true);
+//   else setStatus("No saved data found. Upload a file to get started.", true);
+// }
+
+// document.getElementById("saveProfile").addEventListener("click", () => {
+//   const profile = {
+//     fullname: document.getElementById("fullname").value,
+//     username: document.getElementById("username").value,
+//     email: document.getElementById("email").value,
+//     emailPassword: document.getElementById("emailPassword").value,
+//     submissionPassword: document.getElementById("submissionPassword").value,
+//     activePassword: document.querySelector(
+//       'input[name="activePassword"]:checked'
+//     ).value,
+//   };
+//   chrome.storage.local.set({ profile }, () => {
+//     document.getElementById("status").innerText = "✅ Profile saved!";
+//   });
+// });
+
+// // load profile on popup open
+// chrome.storage.local.get("profile", (res) => {
+//   if (res.profile) {
+//     const profile = res.profile;
+//     document.getElementById("fullname").value = profile.fullname || "";
+//     document.getElementById("username").value = profile.username || "";
+//     document.getElementById("email").value = profile.email || "";
+//     document.getElementById("emailPassword").value =
+//       profile.emailPassword || "";
+//     document.getElementById("submissionPassword").value =
+//       profile.submissionPassword || "";
+//     if (profile.activePassword) {
+//       document.querySelector(
+//         `input[name="activePassword"][value="${profile.activePassword}"]`
+//       ).checked = true;
+//     }
+//   }
+// });
+
+// // Save profile with two passwords and the chosen radio
+// document.getElementById("saveProfile").addEventListener("click", () => {
+//   const profile = {
+//     fullname: document.getElementById("fullname").value || "",
+//     username: document.getElementById("username").value || "",
+//     email: document.getElementById("email").value || "",
+//     emailPassword: document.getElementById("emailPassword").value || "",
+//     submissionPassword:
+//       document.getElementById("submissionPassword").value || "",
+//     activePassword:
+//       (document.querySelector('input[name="activePassword"]:checked') || {})
+//         .value || "emailPassword",
+//   };
+//   chrome.storage.local.set({ profile }, () => {
+//     const st = document.getElementById("status");
+//     if (st) {
+//       st.innerText = "✅ Profile saved!";
+//       setTimeout(() => (st.innerText = ""), 2000);
+//     }
+//   });
+// });
+
+// // Load profile when popup opens
+// chrome.storage.local.get("profile", (res) => {
+//   if (res.profile) {
+//     const p = res.profile;
+//     document.getElementById("fullname").value = p.fullname || "";
+//     document.getElementById("username").value = p.username || "";
+//     document.getElementById("email").value = p.email || "";
+//     document.getElementById("emailPassword").value = p.emailPassword || "";
+//     document.getElementById("submissionPassword").value =
+//       p.submissionPassword || "";
+
+//     const active =
+//       p.activePassword ||
+//       (p.emailPassword
+//         ? "emailPassword"
+//         : p.submissionPassword
+//         ? "submissionPassword"
+//         : "emailPassword");
+//     const radio = document.querySelector(
+//       `input[name="activePassword"][value="${active}"]`
+//     );
+//     if (radio) radio.checked = true;
+//   }
+// });
+
+// // UX nicety: focusing a password input auto-selects its radio
+// ["emailPassword", "submissionPassword"].forEach((id) => {
+//   const el = document.getElementById(id);
+//   if (el) {
+//     el.addEventListener("focus", () => {
+//       const r = document.querySelector(
+//         `input[name="activePassword"][value="${id}"]`
+//       );
+//       if (r) r.checked = true;
+//     });
+//   }
+// });
+
+// // Listen for tab changes
+// chrome.tabs.onActivated.addListener(() => {
+//   checkWebsiteSupport();
+// });
+
+// // Listen for tab updates (when URL changes)
+// chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+//   if (tab.active && changeInfo.status === "complete") {
+//     checkWebsiteSupport();
+//   }
+// });
+
+// // Listen for storage changes (sync across tabs/panels)
+// chrome.storage.onChanged.addListener((changes, area) => {
+//   if (area === "local" && changes[STORAGE_KEY]) {
+//     const newData = changes[STORAGE_KEY].newValue || [];
+//     window.__ROW_FILLER_ROWS = newData;
+//     renderRows(newData);
+//     setStatus(`🔄 Synced ${newData.length} rows from storage`, true);
+//   }
+// });
+
+// // ---------- Init ----------
+// document.addEventListener("DOMContentLoaded", async () => {
+//   fileInput = document.getElementById("fileInput");
+//   rowsContainer = document.getElementById("rowsContainer");
+//   statusDiv = document.getElementById("status");
+//   clearBtn = document.getElementById("clearAll");
+//   refreshDataBtn = document.getElementById("refreshData");
+//   websiteStatusDiv = document.getElementById("websiteStatus");
+
+//   if (fileInput) fileInput.addEventListener("change", handleFile);
+//   if (clearBtn)
+//     clearBtn.addEventListener("click", async () => {
+//       window.__ROW_FILLER_ROWS = [];
+//       await clearStorage();
+//       renderRows([]);
+//       setStatus("✅ All data cleared");
+//     });
+//   if (refreshDataBtn) refreshDataBtn.addEventListener("click", loadAndRender);
+
+//   await new Promise((r) => setTimeout(r, 100));
+//   checkWebsiteSupport();
+//   await loadAndRender();
+// });
+
+// popup.js
 window.__ROW_FILLER_ROWS = []; // expose for debugging
 
 // DOM elements
-let fileInput, rowsContainer, statusDiv, clearBtn, refreshDataBtn, websiteStatusDiv;
+let fileInput,
+  rowsContainer,
+  statusDiv,
+  clearBtn,
+  refreshDataBtn,
+  websiteStatusDiv;
 
 // Local storage key
 const STORAGE_KEY = "rowfiller_parsed_data";
@@ -847,18 +1300,21 @@ function checkWebsiteSupport() {
       "tumblr.com",
       "gifyu.com",
       "medium.com",
-      "penzu.com"
+      "penzu.com",
     ];
 
     const matched = supportedSites.find((site) => hostname.includes(site));
     if (matched) {
       updateWebsiteStatus("supported", "✅", `Website supported: ${hostname}`);
     } else {
-      updateWebsiteStatus("unsupported", "❌", `Website not supported: ${hostname}`);
+      updateWebsiteStatus(
+        "unsupported",
+        "❌",
+        `Website not supported: ${hostname}`
+      );
     }
   });
 }
-
 
 function updateWebsiteStatus(type, icon, text) {
   if (!websiteStatusDiv) return;
@@ -928,15 +1384,25 @@ function processTableRows(rows) {
   if (!rows || !rows.length) return setStatus("No rows found");
 
   let headerIdx = -1;
-  const headerCandidates = ["title", "description", "desc", "keyword", "target", "link", "url"];
+  const headerCandidates = [
+    "title",
+    "description",
+    "desc",
+    "keyword",
+    "target",
+    "link",
+    "url",
+  ];
   for (let i = 0; i < Math.min(rows.length, 7); i++) {
     const rowLower = rows[i].map((c) => ("" + c).toLowerCase()).join("|");
     if (headerCandidates.some((h) => rowLower.includes(h))) {
-      headerIdx = i; break;
+      headerIdx = i;
+      break;
     }
   }
 
-  let header = null, dataRows = rows;
+  let header = null,
+    dataRows = rows;
   if (headerIdx >= 0) {
     header = rows[headerIdx].map((h) => ("" + h).trim().toLowerCase());
     dataRows = rows.slice(headerIdx + 1);
@@ -946,12 +1412,16 @@ function processTableRows(rows) {
   const parsed = dataRows
     .filter((r) => r.some((c) => ("" + c).trim() !== ""))
     .map((r) => {
-      let title = r[0] || "", description = r[1] || "", link = r[2] || "", tags = r[3] || "";
+      let title = r[0] || "",
+        description = r[1] || "",
+        link = r[2] || "",
+        tags = r[3] || "";
       if (header) {
         header.forEach((h, i) => {
           if (h.includes("title")) title = r[i];
           if (h.includes("desc")) description = r[i];
-          if (h.includes("link") || h.includes("url") || h.includes("target")) link = r[i];
+          if (h.includes("link") || h.includes("url") || h.includes("target"))
+            link = r[i];
           if (h.includes("tag") || h.includes("keyword")) tags = r[i];
         });
       }
@@ -960,7 +1430,7 @@ function processTableRows(rows) {
         description: (description || "").toString().trim(),
         link: (link || "").toString().trim(),
         tags: (tags || "").toString().trim(),
-        imageData: null   // ✅ placeholder for dropped image
+        imageData: null,
       };
     });
 
@@ -973,23 +1443,27 @@ function processTableRows(rows) {
 // ---------- Drag & Drop Image ----------
 function addDragDropToRow(div, rowIndex) {
   div.addEventListener("dragover", (e) => {
-    e.preventDefault(); div.style.borderColor = "#e879f9";
+    e.preventDefault();
+    div.style.borderColor = "#e879f9";
   });
   div.addEventListener("dragleave", (e) => {
-    e.preventDefault(); div.style.borderColor = "";
+    e.preventDefault();
+    div.style.borderColor = "";
   });
   div.addEventListener("drop", async (e) => {
-    e.preventDefault(); div.style.borderColor = "";
+    e.preventDefault();
+    div.style.borderColor = "";
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       const file = files[0];
-      if (!file.type.startsWith("image/")) return setStatus("❌ Please drop an image");
+      if (!file.type.startsWith("image/"))
+        return setStatus("❌ Please drop an image");
       const reader = new FileReader();
       reader.onload = (ev) => {
         window.__ROW_FILLER_ROWS[rowIndex].imageData = ev.target.result;
         saveToStorage(window.__ROW_FILLER_ROWS);
         renderRows(window.__ROW_FILLER_ROWS);
-        setStatus(`✅ Image saved to row ${rowIndex+1}`);
+        setStatus(`✅ Image saved to row ${rowIndex + 1}`);
       };
       reader.readAsDataURL(file);
       return;
@@ -1005,7 +1479,7 @@ function addDragDropToRow(div, rowIndex) {
         window.__ROW_FILLER_ROWS[rowIndex].imageData = reader.result;
         saveToStorage(window.__ROW_FILLER_ROWS);
         renderRows(window.__ROW_FILLER_ROWS);
-        setStatus(`✅ Image saved to row ${rowIndex+1}`);
+        setStatus(`✅ Image saved to row ${rowIndex + 1}`);
       };
       reader.readAsDataURL(blob);
     } catch (err) {
@@ -1027,15 +1501,23 @@ function renderRows(rows) {
     div.className = "row-item";
     div.dataset.i = i;
     div.innerHTML = `
-      ${r.imageData ? `<img src="${r.imageData}" style="max-height:60px;max-width:100px;margin-bottom:5px;border-radius:6px;display:block;">` : ""}
-      <div class="row-title">${i+1}. ${escapeHtml(r.title||"Untitled")}</div>
-      ${r.description ? `<div class="row-description">${escapeHtml(r.description)}</div>` : ""}
-      ${r.link ? `<div class="row-link">🔗 ${escapeHtml(r.link)}</div>` : ""}
-      ${r.tags ? `<div class="row-tags">🏷️ ${escapeHtml(r.tags)}</div>` : ""}
+      ${r.imageData ? `<img class="row-thumb" src="${r.imageData}">` : ""}
+      <div style="font-weight:700;">${i + 1}. ${escapeHtml(
+      r.title || "Untitled"
+    )}</div>
+      ${
+        r.description
+          ? `<div class="small">${escapeHtml(r.description)}</div>`
+          : ""
+      }
+      ${r.link ? `<div class="small">🔗 ${escapeHtml(r.link)}</div>` : ""}
+      ${r.tags ? `<div class="small">🏷️ ${escapeHtml(r.tags)}</div>` : ""}
     `;
     addDragDropToRow(div, i);
     div.addEventListener("click", () => {
-      document.querySelectorAll(".row-item").forEach(el => el.classList.remove("selected"));
+      document
+        .querySelectorAll(".row-item")
+        .forEach((el) => el.classList.remove("selected"));
       div.classList.add("selected");
       applyRow(i);
     });
@@ -1043,7 +1525,10 @@ function renderRows(rows) {
   });
 }
 function escapeHtml(s) {
-  return (""+s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+  return ("" + s).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
+  );
 }
 
 // ---------- Apply ----------
@@ -1053,19 +1538,119 @@ function applyRow(i) {
   setStatus("🚀 Applying...");
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (!tabs[0]) return setStatus("❌ No active tab");
-    chrome.tabs.sendMessage(tabs[0].id, { action:"applyRow", data:r }, (resp) => {
-      if (resp && resp.status) setStatus(`✅ ${resp.status}`, true);
-      else setStatus("✅ Applied!", true);
-    });
+    chrome.tabs.sendMessage(
+      tabs[0].id,
+      { action: "applyRow", data: r },
+      (resp) => {
+        if (resp && resp.status) setStatus(`✅ ${resp.status}`, true);
+        else setStatus("✅ Applied!", true);
+      }
+    );
   });
 }
+
+// ---------- Profile Save / Load ----------
+document.addEventListener("click", (e) => {
+  // guard if DOM not ready yet
+});
+
+document.getElementById &&
+  (function attachProfileHandlers() {
+    // Save profile with two passwords and the chosen radio
+    const saveBtn = document.getElementById("saveProfile");
+    if (saveBtn) {
+      saveBtn.addEventListener("click", () => {
+        const profile = {
+          fullname: document.getElementById("fullname").value || "",
+          username: document.getElementById("username").value || "",
+          email: document.getElementById("email").value || "",
+          emailPassword: document.getElementById("emailPassword").value || "",
+          submissionPassword:
+            document.getElementById("submissionPassword").value || "",
+          activePassword:
+            (
+              document.querySelector('input[name="activePassword"]:checked') ||
+              {}
+            ).value || "emailPassword",
+        };
+        chrome.storage.local.set({ profile }, () => {
+          const st = document.getElementById("status");
+          if (st) {
+            st.innerText = "✅ Profile saved!";
+            setTimeout(() => (st.innerText = ""), 2000);
+          }
+        });
+      });
+    }
+
+    // Autofill auth button
+    const af = document.getElementById("autofillAuth");
+    if (af) {
+      af.addEventListener("click", async () => {
+        const [tab] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+        if (!tab) {
+          setStatus("❌ No active tab");
+          return;
+        }
+        chrome.runtime.sendMessage(
+          { action: "triggerAuthFill", tabId: tab.id },
+          (res) => {
+            if (res && res.ok) setStatus("✅ Autofill triggered");
+            else setStatus("❌ Autofill failed (no profile or fields)");
+          }
+        );
+      });
+    }
+
+    // Load profile when popup opens
+    chrome.storage.local.get("profile", (res) => {
+      if (res.profile) {
+        const p = res.profile;
+        document.getElementById("fullname").value = p.fullname || "";
+        document.getElementById("username").value = p.username || "";
+        document.getElementById("email").value = p.email || "";
+        document.getElementById("emailPassword").value = p.emailPassword || "";
+        document.getElementById("submissionPassword").value =
+          p.submissionPassword || "";
+
+        const active =
+          p.activePassword ||
+          (p.emailPassword
+            ? "emailPassword"
+            : p.submissionPassword
+            ? "submissionPassword"
+            : "emailPassword");
+        const radio = document.querySelector(
+          `input[name="activePassword"][value="${active}"]`
+        );
+        if (radio) radio.checked = true;
+      }
+    });
+
+    // UX nicety: focusing a password input auto-selects its radio
+    ["emailPassword", "submissionPassword"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener("focus", () => {
+          const r = document.querySelector(
+            `input[name="activePassword"][value="${id}"]`
+          );
+          if (r) r.checked = true;
+        });
+      }
+    });
+  })();
 
 // ---------- Auto Load & Sync ----------
 async function loadAndRender() {
   const saved = await loadFromStorage();
-  window.__ROW_FILLER_ROWS = saved;
-  renderRows(saved);
-  if (saved.length) setStatus(`✅ Loaded ${saved.length} rows from storage`, true);
+  window.__ROW_FILLER_ROWS = saved || [];
+  renderRows(saved || []);
+  if (saved && saved.length)
+    setStatus(`✅ Loaded ${saved.length} rows from storage`, true);
   else setStatus("No saved data found. Upload a file to get started.", true);
 }
 
@@ -1076,12 +1661,8 @@ chrome.tabs.onActivated.addListener(() => {
 
 // Listen for tab updates (when URL changes)
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (tab.active && changeInfo.status === "complete") {
-    checkWebsiteSupport();
-  }
+  if (tab.active && changeInfo.status === "complete") checkWebsiteSupport();
 });
-
-
 
 // Listen for storage changes (sync across tabs/panels)
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -1103,13 +1684,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   websiteStatusDiv = document.getElementById("websiteStatus");
 
   if (fileInput) fileInput.addEventListener("change", handleFile);
-  if (clearBtn) clearBtn.addEventListener("click", async () => {
-    window.__ROW_FILLER_ROWS = []; await clearStorage();
-    renderRows([]); setStatus("✅ All data cleared");
-  });
+  if (clearBtn)
+    clearBtn.addEventListener("click", async () => {
+      window.__ROW_FILLER_ROWS = [];
+      await clearStorage();
+      renderRows([]);
+      setStatus("✅ All data cleared");
+    });
   if (refreshDataBtn) refreshDataBtn.addEventListener("click", loadAndRender);
 
-  await new Promise(r => setTimeout(r, 100));
+  await new Promise((r) => setTimeout(r, 100));
   checkWebsiteSupport();
   await loadAndRender();
 });
