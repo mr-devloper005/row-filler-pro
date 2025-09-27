@@ -1,57 +1,44 @@
 {
   "manifest_version": 3,
-  "name": "RowFiller",
-  "version": "1.0",
+  "name": "Hyper Fill",
+  "description": "Automatically fills login / signup forms and supports content posting on multiple sites.",
+  "version": "4.0.0",
+
   "permissions": [
     "storage",
     "scripting",
     "activeTab",
     "tabs",
-    "sidePanel"
+    "sidePanel",
+    "webNavigation"
   ],
+
   "host_permissions": [
-    "*://*.pinterest.com/*",
-    "*://*.pixabay.com/*",
-    "*://*.canva.com/*",
-    "*://*.imgbb.com/*",
-    "*://*.imgur.com/*",
-    "*://*.diigo.com/*",
-    "*://*.500px.com/*",
-    "*://*.tumblr.com/*",
-    "*://*.medium.com/*",
-    "*://*.gifyu.com/*",
-    "*://*.penzu.com/*"
+    "<all_urls>"
   ],
+
   "action": {
     "default_title": "Open RowFiller SidePanel"
   },
+
   "background": {
     "service_worker": "background.js"
   },
+
   "side_panel": {
     "default_path": "popup.html"
   },
+
   "content_scripts": [
     {
-      "matches": [
-        "*://*.pinterest.com/*",
-        "*://*.pixabay.com/*",
-        "*://*.canva.com/*",
-        "*://*.imgbb.com/*",
-        "*://*.imgur.com/*",
-        "*://*.diigo.com/*",
-        "*://*.500px.com/*",
-        "*://*.tumblr.com/*",
-        "*://*.medium.com/*",
-        "*://*.gifyu.com/*",
-        "*://*.penzu.com/*"
-      ],
+      "matches": ["<all_urls>"],
       "js": [
         "content/utils.js",
         "content/sites/pinterest.js",
         "content/sites/medium.js",
         "content/index.js",
-        "content/auth.js"
+        "content/auth.js",
+        "content/autofill.js"
       ],
       "run_at": "document_idle"
     }

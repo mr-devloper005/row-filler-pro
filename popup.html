@@ -165,6 +165,9 @@
 </html> -->
 
 
+
+
+
 <!doctype html>
 <html data-theme="dark">
 <head>
@@ -172,216 +175,222 @@
   <title>HyperFill</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root{
+    :root {
       --bg: linear-gradient(135deg,#15151b,#24232d);
-      --panel: rgba(255,255,255,0.03);
-      --border: rgba(255,255,255,0.08);
+      --panel: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.1);
       --text: #e6eef8;
       --muted: #b9c2d6;
       --accent1: #a78bfa;
       --accent2: #f472b6;
       --success: #34d399;
-      --link: #38bdf8;
-      --row-bg: #231f2b;
-      --row-border: rgba(255,255,255,0.04);
-      --number-bg: rgba(0,0,0,0.25);
     }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height:100%; background:var(--bg); font-family: Inter, system-ui, sans-serif; color:var(--text); overflow:hidden; }
+    .app { display:flex; flex-direction:column; height:100vh; min-width:360px; max-width:520px; }
 
-    [data-theme="light"]{
-      --bg: linear-gradient(135deg,#ffffff,#f8fafc);
-      --panel: #ffffff;
-      --border: rgba(15,23,42,0.06);
-      --text: #0f172a;
-      --muted: #475569;
-      --accent1: #7c3aed;
-      --accent2: #be185d;
-      --success: #059669;
-      --link: #2563eb;
-      --row-bg: #ffffff;
-      --row-border: rgba(15,23,42,0.06);
-      --number-bg: rgba(0,0,0,0.06);
+    /* Navbar */
+    .navbar { padding:12px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+    .brand-wrap { display:flex; align-items:center; gap:10px; }
+    .logo { width:36px; height:36px; border-radius:10px; background:linear-gradient(90deg,var(--accent1),var(--accent2)); display:flex; align-items:center; justify-content:center; font-weight:800; color:#111; }
+    .brand { font-size:16px; font-weight:700; background:linear-gradient(90deg,var(--accent1),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .status-top { font-size:12px; color:var(--muted); text-align:center; flex:1; }
+    .nav-controls { display:flex; align-items:center; gap:8px; }
+
+    .nav-btn { background:none; border:none; color:var(--muted); cursor:pointer; font-size:13px; padding:6px 10px; border-radius:6px; }
+    .nav-btn:hover { background:rgba(255,255,255,0.04); color:var(--text); }
+
+    .toggle {
+      display:inline-flex; align-items:center; gap:8px; cursor:pointer; user-select:none;
+      background:rgba(255,255,255,0.02); padding:6px 8px; border-radius:10px; border:1px solid var(--border);
+      color:var(--muted); font-size:13px;
     }
+    .toggle.on { background:linear-gradient(90deg,#34d399,#06b6d4); color:#021012; border-color: rgba(0,0,0,0.1); }
 
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:var(--text);background:var(--bg);overflow:hidden}
-    .navbar{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border);backdrop-filter:blur(6px)}
-    .brand{display:flex;align-items:center;gap:10px}
-    .brand .logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(90deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;color:#111;font-weight:800}
-    .brand h1{font-size:15px;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    .nav-actions{display:flex;gap:10px;align-items:center;font-size:16px}
-    .nav-actions button{background:transparent;border:none;color:var(--muted);cursor:pointer;padding:6px;border-radius:8px}
-    .nav-actions button:hover{background:rgba(255,255,255,0.02);transform:scale(1.06)}
+    /* Main */
+    .main { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:14px;
+           scrollbar-color: var(--muted) transparent; scrollbar-width: thin; }
+    .main::-webkit-scrollbar { width:8px; }
+    .main::-webkit-scrollbar-track { background:transparent; }
+    .main::-webkit-scrollbar-thumb { background:var(--border); border-radius:6px; }
 
-    .container{display:flex;flex-direction:column;gap:12px;padding:12px;height:calc(100% - 62px)}
+    .field { display:flex; flex-direction:column; gap:6px; }
+    .field label { font-size:13px; font-weight:500; color:var(--muted); }
+    .input, textarea { padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:14px; width:100%; }
+    textarea { min-height:96px; resize:vertical; }
 
-    /* small sections */
-    .card{background:var(--panel);border:1px solid var(--border);padding:10px;border-radius:10px}
-    .compact-input{width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:13px;margin-bottom:8px}
-    .profile-row{display:flex;gap:8px;align-items:center}
-    .profile-row .compact-input{margin-bottom:0}
-    .radioWrap{font-size:12px;color:var(--muted)}
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
 
-    .btn-primary{width:100%;padding:10px;border-radius:8px;border:none;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#0b1020;font-weight:700;cursor:pointer;margin-top:8px}
-    .btn-accent{background:linear-gradient(90deg,#34d399,#06b6d4);color:#021012}
+    .password-row { display:flex; gap:12px; align-items:center; }
+    .password-toggle { display:flex; gap:8px; align-items:center; font-size:13px; color:var(--muted); }
 
-    /* file input styling (native) */
-    #fileInput{font-size:13px;color:var(--muted)}
+    /* Footer */
+    .footer { border-top:1px solid var(--border); padding:12px; display:flex; gap:10px; position:sticky; bottom:0; background:var(--bg); }
+    .btn { flex:1; padding:12px; border-radius:10px; border:none; cursor:pointer; font-weight:600; font-size:14px; }
+    .btn-save { background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#0b1020; }
+    .btn-autofill { background:linear-gradient(90deg,#34d399,#06b6d4); color:#021012; }
 
-    /* website status small */
-    .status-inline{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
-
-    /* parsed rows BIG container */
-    .rows-wrapper{
-      flex: 1;
-      overflow-y: auto; /* vertical scroll */
-      overflow-x: hidden; /* horizontal scroll removed */
-      padding-right: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      max-height: 600px; /* container height bada */
-    }
-
-    /* custom scrollbar */
-    .rows-wrapper::-webkit-scrollbar{width:10px}
-    .rows-wrapper::-webkit-scrollbar-track{background:transparent}
-    .rows-wrapper::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--accent1),var(--accent2));border-radius:10px}
-    .rows-wrapper{scrollbar-width:thin;scrollbar-color: linear-gradient(180deg,var(--accent1),var(--accent2)) transparent}
-
-    .row-item{
-      display: flex;
-      flex-direction: column; /* image on top */
-      gap: 12px;
-      padding: 16px;
-      border-radius: 12px;
-      background: var(--row-bg);
-      border: 1px solid var(--row-border);
-      transition: transform .18s, box-shadow .18s;
-      cursor: pointer;
-      min-height: 250px; /* row height bada */
-      position: relative;
-    }
-    .row-item:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(0,0,0,0.35)}
-
-    .row-left{
-      position: absolute;
-      top: 16px;
-      left: 16px;
-      width: 40px;
-      height: 40px;
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--heading);
-      background: var(--number-bg);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-    }
-
-    .row-body{
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      width: 100%;
-    }
-
-    .row-img{
-      width: 100%;
-      height: 180px; /* bada image */
-      object-fit: cover; /* fit properly */
-      border-radius: 10px;
-    }
-
-    .row-title{ font-size:25px; font-weight:900; margin-top:6px; }
-    .row-desc{ font-size:18px; color: #b9c2d6; color:var(--desc); line-height:1.4; }
-
-    /* small status at bottom */
-    #status{font-size:12px;color:var(--muted);text-align:center;margin-top:4px}
-
-    /* responsive/fix sizes */
-    @media (max-width:420px){ 
-      .row-title{font-size:15px} 
-      .row-desc{font-size:12px} 
-      .row-left{width:40px;height:40px;font-size:13px} 
-      .row-img{height:140px;}
+    @media (max-width:420px) {
+      .main { padding:12px; gap:10px; }
+      .brand { font-size:15px; }
     }
   </style>
 </head>
 <body>
-  <!-- Navbar -->
-  <div class="navbar">
-    <div class="brand">
-      <div class="logo">HF</div>
-      <h1>HyperFill</h1>
+  <div class="app">
+    <div class="navbar">
+      <div class="brand-wrap">
+        <div class="logo">HF</div>
+        <div class="brand">HyperFill</div>
+      </div>
+
+      <div id="status" class="status-top"></div>
+
+      <div class="nav-controls">
+        <div id="toggleAutofill" class="toggle" title="Toggle autofill on/off">Autofill: <span id="toggleState">On</span></div>
+        <button id="clearAllNav" class="nav-btn" title="Clear saved profile">Clear</button>
+      </div>
     </div>
-    <div class="nav-actions">
-      <button id="toggleTheme" title="Toggle theme">🌙</button>
-      <button id="refreshDataNav" title="Refresh parsed rows">🔄</button>
-      <button id="clearAllNav" title="Clear all data">🗑️</button>
+
+    <div class="main">
+      <div class="field">
+        <label for="firstname">First Name</label>
+        <input id="firstname" class="input" type="text" placeholder="e.g. Yash" autocomplete="given-name" />
+      </div>
+
+      <div class="field">
+        <label for="lastname">Last Name</label>
+        <input id="lastname" class="input" type="text" placeholder="e.g. Nihalani" autocomplete="family-name" />
+      </div>
+
+      <div class="field">
+        <label for="fullname">Full Name</label>
+        <input id="fullname" class="input" type="text" placeholder="e.g. Yash Nihalni" autocomplete="name" />
+      </div>
+
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" class="input" type="text" placeholder="username (filled only when explicit)" />
+      </div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" class="input" type="email" placeholder="personal@example.com" autocomplete="email" />
+      </div>
+
+      <div class="field">
+        <label for="businessEmail">Business Email</label>
+        <input id="businessEmail" class="input" type="email" placeholder="work@example.com" />
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="emailPassword">Password (Email)</label>
+          <input id="emailPassword" class="input" placeholder="password for email" />
+        </div>
+        <div class="field">
+          <label for="submissionPassword">Password (Submission)</label>
+          <input id="submissionPassword" class="input" placeholder="password for site submissions" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Active password to use for autofill</label>
+        <div class="password-row">
+          <label class="password-toggle"><input type="radio" name="activePassword" value="emailPassword" checked /> Use Email password</label>
+          <label class="password-toggle"><input type="radio" name="activePassword" value="submissionPassword" /> Use Submission password</label>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="phone">Phone</label>
+          <input id="phone" class="input" type="tel" placeholder="+91 9xxxxxxxxx" autocomplete="tel" />
+        </div>
+        <div class="field">
+          <label for="title">Title</label>
+          <input id="title" class="input" type="text" placeholder="Job title / Listing title" />
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="category">Category</label>
+          <input id="category" class="input" type="text" placeholder="Category" />
+        </div>
+        <div class="field">
+          <label for="subcategory">Sub Category</label>
+          <input id="subcategory" class="input" type="text" placeholder="Sub category" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="address">Address</label>
+        <textarea id="address" class="input" placeholder="Street address / full address" autocomplete="street-address"></textarea>
+      </div>
+
+      <div class="grid-3">
+        <div class="field">
+          <label for="city">City</label>
+          <input id="city" class="input" type="text" placeholder="City" autocomplete="address-level2" />
+        </div>
+        <div class="field">
+          <label for="state">State</label>
+          <input id="state" class="input" type="text" placeholder="State / Province" autocomplete="address-level1" />
+        </div>
+        <div class="field">
+          <label for="postcode">Postcode</label>
+          <input id="postcode" class="input" type="text" placeholder="Postal / ZIP code" autocomplete="postal-code" />
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="country">Country</label>
+          <input id="country" class="input" type="text" placeholder="Country" autocomplete="country" />
+        </div>
+        <div class="field">
+          <label for="location">Location</label>
+          <input id="location" class="input" type="text" placeholder="Location / Place / Area" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="facebook">Facebook</label>
+        <input id="facebook" class="input" type="url" placeholder="https://www.facebook.com/yourpage" />
+      </div>
+      <div class="field">
+        <label for="linkedin">LinkedIn</label>
+        <input id="linkedin" class="input" type="url" placeholder="https://www.linkedin.com/in/yourprofile" />
+      </div>
+      <div class="field">
+        <label for="instagram">Instagram</label>
+        <input id="instagram" class="input" type="text" placeholder="@yourhandle" />
+      </div>
+      <div class="field">
+        <label for="twitter">Twitter</label>
+        <input id="twitter" class="input" type="text" placeholder="@yourhandle" />
+      </div>
+      <div class="field">
+        <label for="youtube">YouTube</label>
+        <input id="youtube" class="input" type="url" placeholder="https://www.youtube.com/yourchannel" />
+      </div>
+
+
+
+      <div class="field">
+        <label for="description">Description / About</label>
+        <textarea id="description" class="input" placeholder="Business / listing description"></textarea>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button id="saveProfile" class="btn btn-save">Save Profile</button>
+      <button id="applyProfileOnTab" class="btn btn-autofill">Hard Fill</button>
     </div>
   </div>
 
-  <div class="container">
-    <!-- profile compact -->
-    <div class="card">
-      <div style="display:flex;gap:10px;align-items:center;">
-        <input id="fullname" class="compact-input" placeholder="Full name" />
-        <input id="username" class="compact-input" placeholder="Username" />
-      </div>
-      <input id="email" class="compact-input" placeholder="Email" />
-      <div class="profile-row" style="margin-top:6px">
-        <input id="emailPassword" class="compact-input" placeholder="Password (Email)" type="password" />
-        <div class="radioWrap"><label><input type="radio" name="activePassword" value="emailPassword" checked /> Use</label></div>
-      </div>
-      <div class="profile-row">
-        <input id="submissionPassword" class="compact-input" placeholder="Password (Submission)" type="password" />
-        <div class="radioWrap"><label><input type="radio" name="activePassword" value="submissionPassword" /> Use</label></div>
-      </div>
-
-      <button id="saveProfile" class="btn-primary">Save Profile</button>
-      <button id="autofillAuth" class="btn-primary btn-accent" style="margin-top:8px">Autofill Login/Signup</button>
-    </div>
-
-    <!-- file -->
-    <div class="card" style="display:flex;align-items:center;gap:10px;">
-      <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" />
-    </div>
-
-    <div class="card status-inline">
-      <div id="websiteStatus"><span class="status-icon">🔍</span><span class="status-text">Checking website</span></div>
-    </div>
-
-    <!-- parsed rows (scrollable) -->
-    <div class="rows-wrapper card" id="rowsContainer">
-      <!-- rows will be injected here -->
-    </div>
-
-    <div id="status"></div>
-  </div>
-
-  <script src="xlsx.full.min.js"></script>
   <script src="popup.js"></script>
-
-  <script>
-    // Hook navbar buttons (these call globals exposed by popup.js)
-    const html = document.documentElement;
-    const themeBtn = document.getElementById('toggleTheme');
-    themeBtn.addEventListener('click', () => {
-      if (html.getAttribute('data-theme') === 'light') {
-        html.setAttribute('data-theme','dark'); themeBtn.textContent = '🌙';
-      } else {
-        html.setAttribute('data-theme','light'); themeBtn.textContent = '☀️';
-      }
-    });
-
-    document.getElementById('refreshDataNav').addEventListener('click', () => {
-      if (typeof window.refreshData === 'function') window.refreshData();
-    });
-    document.getElementById('clearAllNav').addEventListener('click', () => {
-      if (typeof window.clearAll === 'function') window.clearAll();
-    });
-  </script>
 </body>
 </html>
