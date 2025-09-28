@@ -111,10 +111,7 @@
 //   });
 // })();
 
-
-
 // // best working version
-
 
 // // content/auth.js
 // (function () {
@@ -256,9 +253,6 @@
 
 // //  best working version
 
-
-
-
 // (function () {
 //   console.log("🔑 content/auth.js loaded (auth autofill handler)");
 
@@ -373,8 +367,8 @@
 //       const fullname = profile.fullname || `${first} ${last}`.trim();
 //       const bizEmail = profile.businessEmail || "";
 //       const defaultEmail = profile.email || "";
-//       const activePass = (profile.activePassword === "submissionPassword") 
-//         ? (profile.submissionPassword || "") 
+//       const activePass = (profile.activePassword === "submissionPassword")
+//         ? (profile.submissionPassword || "")
 //         : (profile.emailPassword || "") || "";
 
 //       // New fields
@@ -432,24 +426,6 @@
 //     return true; // async response
 //   });
 // })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // // content/auth.js
 // (function () {
@@ -586,13 +562,6 @@
 //     }
 //   });
 // })();
-
-
-
-
-
-
-
 
 // // content/auth.js (improved)
 // (function () {
@@ -801,22 +770,6 @@
 //     }
 //   });
 // })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // // content/auth.js (strict auth filler)
 // (function () {
@@ -1072,23 +1025,6 @@
 //   });
 
 // })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // // content/auth.js
 // // Focused strict auth autofill + force support
@@ -1422,33 +1358,6 @@
 
 // })();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // // content/auth.js (updated) - strict auth autofill with guarded username
 // (function () {
 //   if (window.__RowFiller_auth_v2_installed) { console.log("auth script already installed"); return; }
@@ -1763,35 +1672,583 @@
 //   });
 // })();
 
+// // Strict hard-fill + username multi-signal guard + required-only rule for force
+// (function () {
+//   if (window.__RowFiller_autofill_v5_1_installed) return;
+//   window.__RowFiller_autofill_v5_1_installed = true;
+//   console.log("🔑 RowFiller content/autofill.js v5.1 loaded");
 
+//   // ---------- Utilities ----------
+//   const safeLog = (...args) => { try { console.debug("RowFiller:", ...args); } catch(e){} };
 
+//   function debounce(fn, ms = 300) {
+//     let t = null;
+//     return function () { clearTimeout(t); t = setTimeout(() => fn.apply(this, arguments), ms); };
+//   }
 
+//   function setNativeValue(el, value) {
+//     try {
+//       const proto = Object.getPrototypeOf(el);
+//       const desc = Object.getOwnPropertyDescriptor(proto, "value");
+//       if (desc && desc.set) desc.set.call(el, value);
+//       else el.value = value;
+//     } catch (e) {
+//       try { el.value = value; } catch (e2) {}
+//     }
+//     el.dispatchEvent(new Event("input", { bubbles: true }));
+//     el.dispatchEvent(new Event("change", { bubbles: true }));
+//     try { el.dispatchEvent(new Event("blur", { bubbles: true })); } catch(e){}
+//   }
 
+//   function isVisible(el) {
+//     try {
+//       if (!el) return false;
+//       if (el.disabled || el.hidden || el.readOnly) return false;
+//       // some inputs inside template display may have offsetParent null
+//       const style = window.getComputedStyle ? window.getComputedStyle(el) : null;
+//       if (style && style.display === "none") return false;
+//       return (el.offsetParent !== null) || el.tagName.toLowerCase() === "select" || el.getAttribute("contenteditable") === "true";
+//     } catch (e) { return false; }
+//   }
 
+//   function alreadyFilled(el) {
+//     try {
+//       if (!el) return false;
+//       if (el.dataset && el.dataset.rowfiller === "filled") return true;
+//       if (el.getAttribute && el.getAttribute("contenteditable") === "true") {
+//         return !!(el.innerText && el.innerText.trim().length > 0);
+//       }
+//       const v = el.value;
+//       return (v !== undefined && v !== null && String(v).trim().length > 0);
+//     } catch (e) { return false; }
+//   }
 
+//   // ---------- Simple validators ----------
+//   const looksLikeEmail = (v) => typeof v === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+//   const looksLikePhone = (v) => {
+//     if (!v) return false;
+//     const digits = (String(v).match(/\d/g) || []).length;
+//     return digits >= 7; // loose phone check
+//   };
+//   const looksLikeUrl = (v) => {
+//     if (!v) return false;
+//     return /^(https?:\/\/)/i.test(v) || /\.[a-z]{2,}$/i.test(v);
+//   };
+//   const looksLikeUsername = (v) => {
+//     if (!v || typeof v !== "string") return false;
+//     if (v.includes("@") || /\s/.test(v)) return false;
+//     return /^[A-Za-z0-9._\-]{2,}$/.test(v);
+//   };
 
+//   // ---------- Field context extraction ----------
+//   function extractLabelText(el) {
+//     try {
+//       if (!el) return "";
+//       if (el.id) {
+//         try {
+//           const lab = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
+//           if (lab && lab.innerText) return lab.innerText.trim();
+//         } catch (e) {}
+//       }
+//       // ancestor label
+//       let p = el.parentElement;
+//       for (let i = 0; i < 6 && p; i++, p = p.parentElement) {
+//         if (p.tagName && p.tagName.toLowerCase() === "label") return (p.innerText || "").trim();
+//       }
+//       // previous sibling textual label
+//       const prev = el.previousElementSibling;
+//       if (prev && (prev.tagName === "LABEL" || prev.tagName === "SPAN" || prev.tagName === "DIV")) {
+//         if (prev.innerText && prev.innerText.trim()) return prev.innerText.trim();
+//       }
+//       // aria-labelledby
+//       const labId = el.getAttribute && el.getAttribute("aria-labelledby");
+//       if (labId) {
+//         const ref = document.getElementById(labId);
+//         if (ref && ref.innerText) return ref.innerText.trim();
+//       }
+//       if (el.title && el.title.trim()) return el.title.trim();
+//       return "";
+//     } catch (e) { return ""; }
+//   }
 
+//   function getFieldParts(el) {
+//     try {
+//       const label = extractLabelText(el) || "";
+//       const name = (el.name || "") + "";
+//       const id = (el.id || "") + "";
+//       const placeholder = (el.placeholder || "") + "";
+//       const aria = (el.getAttribute && el.getAttribute("aria-label")) || "";
+//       const title = (el.getAttribute && el.getAttribute("title")) || "";
+//       // nearby textual hints
+//       let nearby = "";
+//       try {
+//         const parent = el.parentElement;
+//         if (parent) {
+//           nearby = Array.from(parent.childNodes)
+//             .filter(n => n.nodeType === Node.TEXT_NODE)
+//             .map(n => (n.textContent || "").trim()).join(" ");
+//         }
+//       } catch (e) {}
+//       const combined = [label, name, id, placeholder, aria, title, nearby].filter(Boolean).join(" ").toLowerCase();
+//       return {
+//         label: label.toLowerCase(),
+//         name: name.toLowerCase(),
+//         id: id.toLowerCase(),
+//         placeholder: placeholder.toLowerCase(),
+//         aria: (aria || "").toLowerCase(),
+//         title: (title || "").toLowerCase(),
+//         nearby: (nearby || "").toLowerCase(),
+//         combined
+//       };
+//     } catch (e) {
+//       return { label: "", name: "", id: "", placeholder: "", aria: "", title: "", nearby: "", combined: "" };
+//     }
+//   }
 
+//   // ---------- Role configuration ----------
+//   // pos regexes checked on parts with weights; neg penalizes strongly
+//   const ROLE_CFG = {
+//     firstname:   { pos: [/\bfirst(?:[_\s-]?name)?\b/, /\bgiven\b/], neg: [], minAuto: 6, minForce: 10 },
+//     lastname:    { pos: [/\blast(?:[_\s-]?name)?\b/, /\bsurname\b/], neg: [], minAuto: 6, minForce: 10 },
+//     fullname:    { pos: [/\bfull(?:[_\s-]?name)?\b/, /^\bname$/], neg: [], minAuto: 6, minForce: 10 },
+//     username:    { pos: [/^username$|user[_\s-]?name|\buser_id\b|\buserid\b|\blogin\b|handle/], neg: [/\bemail\b|\bmail\b|\bpassword\b|\bphone\b|\baddress\b/], minAuto: 12, minForce: 18 },
+//     email:       { pos: [/\bemail\b/, /\be-?mail\b/], neg: [/business|work|company/], minAuto: 6, minForce: 12 },
+//     businessEmail:{ pos: [/\b(business|work|company|office)[\s_-]*email\b/], neg: [], minAuto: 8, minForce: 14 },
+//     password:    { pos: [/^password$|pass(?:word)?|pwd/], neg: [/confirm|verify|retype|repeat|new|current/], minAuto: 6, minForce: 10 },
+//     phone:       { pos: [/\bphone\b/, /\bmobile\b/, /\btel\b/, /\bcontact\b/], neg: [/fax/], minAuto: 5, minForce: 9 },
+//     address:     { pos: [/\baddress\b/, /\bstreet\b/, /\baddr\b/], neg: [], minAuto: 5, minForce: 9 },
+//     city:        { pos: [/\bcity\b/], neg: [], minAuto: 5, minForce: 9 },
+//     state:       { pos: [/\bstate\b|\bprovince\b|\bregion\b/], neg: [], minAuto: 5, minForce: 9 },
+//     postcode:    { pos: [/\bzip\b|\bpostal\b|\bpostcode\b|\bpin\b/], neg: [], minAuto: 5, minForce: 9 },
+//     country:     { pos: [/\bcountry\b/], neg: [], minAuto: 5, minForce: 9 },
+//     location:    { pos: [/\blocation\b/, /\bplace\b/], neg: [], minAuto: 4, minForce: 8 },
+//     website:     { pos: [/\bwebsite\b|\bhomepage\b|\bsite\b|\bweb[_\s-]?url\b|\burl\b/], neg: [/email/], minAuto: 7, minForce: 12 },
+//     description: { pos: [/\bdescription\b|\babout\b|\bbio\b|\bsummary\b/], neg: [], minAuto: 5, minForce: 9 }
+//   };
 
+//   // ---------- scoring ----------
+//   function scoreForCfg(ctxParts, cfg) {
+//     let score = 0;
+//     for (const rx of cfg.pos) {
+//       if (rx.test(ctxParts.label)) score += 10;
+//       if (rx.test(ctxParts.name)) score += 6;
+//       if (rx.test(ctxParts.id)) score += 6;
+//       if (rx.test(ctxParts.aria)) score += 4;
+//       if (rx.test(ctxParts.placeholder)) score += 2;
+//       if (rx.test(ctxParts.title)) score += 2;
+//       if (rx.test(ctxParts.nearby)) score += 1;
+//     }
+//     if (cfg.neg && cfg.neg.length) {
+//       for (const nrx of cfg.neg) if (nrx.test(ctxParts.combined)) score -= 18;
+//     }
+//     return score;
+//   }
 
+//   // ---------- username multi-signal guard ----------
+//   function usernameSignals(ctxParts, el) {
+//     let signals = 0;
+//     const rx = /username|user[_\s-]?name|login|handle|userid|user id/;
+//     if (rx.test(ctxParts.label)) signals++;
+//     if (rx.test(ctxParts.name)) signals++;
+//     if (rx.test(ctxParts.id)) signals++;
+//     if (rx.test(ctxParts.placeholder)) signals++;
+//     const ac = (el.getAttribute && (el.getAttribute("autocomplete") || "") || "").toLowerCase();
+//     if (ac.includes("username")) signals++;
+//     return signals; // integer number of signals (0..5)
+//   }
 
+//   // ---------- match role function (returns role & score) ----------
+//   function matchRoleAndScore(el) {
+//     if (!el) return null;
+//     if (!isVisible(el)) return null;
 
+//     const type = (el.type || "").toLowerCase();
+//     const tag = (el.tagName || "").toLowerCase();
+//     const ctx = getFieldParts(el);
 
+//     // direct HTML-type shortcuts
+//     if (type === "password") return { role: "password", score: 100 };
+//     if (type === "email") {
+//       const cfg = ROLE_CFG.email;
+//       const sc = scoreForCfg(ctx, cfg);
+//       // business detection if label suggests business
+//       if (/\bbusiness\b|\bwork\b|\bcompany\b/.test(ctx.combined)) return { role: "businessEmail", score: sc + 6 };
+//       return { role: "email", score: sc + 8 };
+//     }
+//     if (type === "tel") {
+//       const cfg = ROLE_CFG.phone;
+//       return { role: "phone", score: scoreForCfg(ctx, cfg) + 8 };
+//     }
 
+//     // if textarea, prefer description role
+//     if (tag === "textarea") {
+//       const cfg = ROLE_CFG.description;
+//       const sc = scoreForCfg(ctx, cfg);
+//       if (sc >= (cfg.minAuto || 5)) return { role: "description", score: sc + 2 };
+//     }
 
+//     // iterate roles and compute best score
+//     let best = null, bestScore = -Infinity;
+//     for (const [role, cfg] of Object.entries(ROLE_CFG)) {
+//       // prefer textarea rule handled above
+//       let sc = scoreForCfg(ctx, cfg);
+//       // small boost when placeholder explicitly matches
+//       if (/(?:^|\s)\w+$/.test(ctx.placeholder)) sc += 0;
+//       if (sc > bestScore) { bestScore = sc; best = role; }
+//     }
 
-// Strict hard-fill + username multi-signal guard + required-only rule for force
+//     if (!best) return null;
+//     return { role: best, score: bestScore };
+//   }
+
+//   // ---------- fallback infer role for required fields ----------
+//   function inferRoleFallbackForRequired(el) {
+//     try {
+//       const ctx = getFieldParts(el);
+//       // quick heuristics
+//       if ((el.type || "").toLowerCase() === "email") return "email";
+//       if ((el.type || "").toLowerCase() === "password") return "password";
+//       if ((el.type || "").toLowerCase() === "tel") return "phone";
+//       if (/\bfirst(?:[_\s-]?name)?\b/.test(ctx.combined)) return "firstname";
+//       if (/\blast(?:[_\s-]?name)?\b/.test(ctx.combined)) return "lastname";
+//       if (/\bname\b/.test(ctx.label) && !/\bfirst\b|\blast\b/.test(ctx.label)) return "fullname";
+//       if (/\bemail\b/.test(ctx.combined)) return "email";
+//       return null;
+//     } catch (e) { return null; }
+//   }
+
+//   // ---------- prepare values ----------
+//   function prepareValues(profile) {
+//     const p = (profile && profile.profile) ? profile.profile : (profile || {});
+//     const first = p.firstname || p.firstName || "";
+//     const last = p.lastname || p.lastName || "";
+//     const fullnameFromParts = (first || last) ? `${(first || "").trim()} ${(last || "").trim()}`.trim() : "";
+//     const fullname = (p.fullname || p.fullName || fullnameFromParts || "").trim();
+//     const password = (p.activePassword === "submissionPassword") ? (p.submissionPassword || "") : (p.emailPassword || p.password || "");
+//     return {
+//       firstname: first,
+//       lastname: last,
+//       fullname,
+//       username: p.username || "",
+//       email: p.email || p.submissionEmail || p.emailId || "",
+//       businessEmail: p.businessEmail || p.workEmail || "",
+//       password,
+//       phone: p.phone || p.number || "",
+//       address: p.address || "",
+//       city: p.city || "",
+//       state: p.state || "",
+//       postcode: p.postcode || p.zip || "",
+//       country: p.country || "",
+//       location: p.location || "",
+//       website: p.website || "",
+//       description: p.description || p.bio || ""
+//     };
+//   }
+
+//   // ---------- actual fill attempt for one element ----------
+//   function tryFillElement(el, role, values, overwrite = false, isForce = false) {
+//     try {
+//       if (!el || !role) return false;
+//       if (!isVisible(el)) return false;
+//       if (!overwrite && alreadyFilled(el)) return false;
+
+//       const v = values[role];
+//       if (!v) return false;
+
+//       // validations to prevent wrong placements
+//       const tag = (el.tagName || "").toLowerCase();
+//       const type = (el.type || "").toLowerCase();
+
+//       if ((role === "email" || role === "businessEmail") && !looksLikeEmail(v)) return false;
+//       if (role === "phone" && !looksLikePhone(v)) return false;
+//       if (role === "website" && !looksLikeUrl(v)) return false;
+//       if (role === "username" && !looksLikeUsername(v)) return false;
+
+//       // avoid putting email into textarea or url inputs
+//       if ((role === "email") && (tag === "textarea" || type === "url")) return false;
+//       if ((role === "username") && ["email","tel","url"].includes(type)) return false;
+
+//       // select option handling
+//       if (tag === "select") {
+//         for (const opt of Array.from(el.options)) {
+//           if (!opt) continue;
+//           try {
+//             if ((opt.value && opt.value.toLowerCase() === String(v).toLowerCase()) || (opt.text && opt.text.toLowerCase() === String(v).toLowerCase())) {
+//               el.value = opt.value;
+//               el.dispatchEvent(new Event("change", { bubbles: true }));
+//               if (el.dataset) el.dataset.rowfiller = "filled";
+//               return true;
+//             }
+//           } catch(e){}
+//         }
+//         return false;
+//       }
+
+//       // contenteditable
+//       if (el.getAttribute && el.getAttribute("contenteditable") === "true") {
+//         try { document.execCommand && document.execCommand('insertText', false, v); } catch(e){ el.innerText = v; }
+//         if (el.dataset) el.dataset.rowfiller = "filled";
+//         return true;
+//       }
+
+//       setNativeValue(el, v);
+//       if (el.dataset) el.dataset.rowfiller = "filled";
+//       return true;
+//     } catch (e) {
+//       safeLog("tryFillElement error:", e);
+//       return false;
+//     }
+//   }
+
+//   // ---------- core fill loop ----------
+//   function doFill(profile, options = { force: false }) {
+//     try {
+//       // skip google account pages for security
+//       if (location.hostname.includes("accounts.google.com") || location.hostname.endsWith("google.com")) {
+//         safeLog("Skipping autofill on Google domains for safety");
+//         return 0;
+//       }
+
+//       const values = prepareValues(profile);
+//       const nodes = Array.from(document.querySelectorAll("input, textarea, select, [contenteditable='true']"));
+
+//       // sort top-to-bottom so natural order is preferred
+//       nodes.sort((a, b) => {
+//         try { return (a.getBoundingClientRect().top || 0) - (b.getBoundingClientRect().top || 0); } catch (e) { return 0; }
+//       });
+
+//       const usedRoles = new Set();
+//       let filled = 0;
+
+//       for (const el of nodes) {
+//         try {
+//           if (!isVisible(el)) continue;
+
+//           // compute match and score
+//           const ms = matchRoleAndScore(el);
+//           let role = ms && ms.role ? ms.role : null;
+//           const score = ms && (typeof ms.score === "number") ? ms.score : 0;
+
+//           // if force & element required but no role computed, try fallback heuristics
+//           const isRequired = !!(el.required || (el.getAttribute && el.getAttribute("aria-required") === "true"));
+//           if (!role && options.force && isRequired) {
+//             role = inferRoleFallbackForRequired(el);
+//             safeLog("Fallback required role inferred:", role, el);
+//           }
+
+//           if (!role) continue;
+
+//           // if role is username: require strong multi-signal, else skip (even in force)
+//           if (role === "username") {
+//             const ctx = getFieldParts(el);
+//             const signals = usernameSignals(ctx, el);
+//             // require at least 3 signals in force mode; at least 2 in auto mode (but only if element empty)
+//             if (options.force) {
+//               if (signals < 3) { safeLog("Username skipped (not enough signals)", signals, ctx); continue; }
+//             } else {
+//               if (signals < 2) { safeLog("Username skipped (auto: not enough signals)", signals, ctx); continue; }
+//             }
+//           }
+
+//           // threshold decision:
+//           const cfg = ROLE_CFG[role] || {};
+//           const minAuto = cfg.minAuto || 6;
+//           const minForce = cfg.minForce || (minAuto + 4);
+
+//           // Decide whether to attempt to fill:
+//           // - Auto mode (not force): only fill if field is empty and score >= minAuto
+//           // - Force mode: overwrite allowed but only if (field is required) OR (score >= minForce)
+//           let willFill = false;
+//           if (options.force) {
+//             if (isRequired) willFill = true;
+//             else if (score >= minForce) willFill = true;
+//             else willFill = false;
+//           } else {
+//             if (!alreadyFilled(el) && score >= minAuto) willFill = true;
+//           }
+
+//           if (!willFill) continue;
+
+//           // Avoid filling same role multiple times except for social/description fields.
+//           if (usedRoles.has(role) && !["description"].includes(role)) {
+//             continue;
+//           }
+
+//           const ok = tryFillElement(el, role, values, options.force, options.force);
+//           if (ok) {
+//             filled++;
+//             usedRoles.add(role);
+//           }
+//         } catch (e) {
+//           safeLog("doFill element loop error:", e);
+//         }
+//       }
+
+//       safeLog(`doFill completed (force=${!!options.force}) -> filled ${filled}`);
+//       return filled;
+//     } catch (e) {
+//       safeLog("doFill top-level error:", e);
+//       return 0;
+//     }
+//   }
+
+//   // ---------- matchRoleAndScore helper uses config & scoring ----------
+//   function matchRoleAndScore(el) {
+//     try {
+//       if (!isVisible(el)) return null;
+//       const type = (el.type || "").toLowerCase();
+//       const tag = (el.tagName || "").toLowerCase();
+//       const parts = getFieldParts(el);
+
+//       // HTML-level shortcuts
+//       if (type === "password") return { role: "password", score: 200 };
+//       if (type === "email") {
+//         let score = 0;
+//         if (ROLE_CFG.email) score = scoreForCfg(parts, ROLE_CFG.email) + 8;
+//         // promote business email when label suggests company/work
+//         if (/\bbusiness\b|\bwork\b|\bcompany\b/.test(parts.combined)) return { role: "businessEmail", score: score + 6 };
+//         return { role: "email", score };
+//       }
+//       if (type === "tel") return { role: "phone", score: (ROLE_CFG.phone ? scoreForCfg(parts, ROLE_CFG.phone) + 8 : 10) };
+
+//       // textarea case
+//       if (tag === "textarea") {
+//         const cfg = ROLE_CFG.description;
+//         const sc = cfg ? scoreForCfg(parts, cfg) : 0;
+//         if (sc >= (cfg ? cfg.minAuto : 5)) return { role: "description", score: sc + 4 };
+//       }
+
+//       // compute best scoring role
+//       let best = null, bestScore = -Infinity;
+//       for (const [role, cfg] of Object.entries(ROLE_CFG)) {
+//         const sc = scoreForCfg(parts, cfg);
+//         if (sc > bestScore) { bestScore = sc; best = role; }
+//       }
+//       if (!best) return null;
+//       return { role: best, score: bestScore };
+//     } catch (e) {
+//       safeLog("matchRoleAndScore error:", e);
+//       return null;
+//     }
+//   }
+
+//   // ---------- messaging (popup <-> content) ----------
+//   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+//     try {
+//       if (!msg || !msg.action) {
+//         sendResponse({ ok: false, error: "no_action" });
+//         return true;
+//       }
+
+//       if (msg.action === "autofill" || msg.action === "autofillProfile" || msg.action === "autofillAuth") {
+//         // allow profile to be passed in message; else read from storage
+//         const doIt = (profile) => {
+//           try {
+//             // check enabled flag
+//             chrome.storage.local.get(["autofillEnabled"], (res) => {
+//               const enabled = (res && res.autofillEnabled !== undefined) ? res.autofillEnabled : true;
+//               if (!enabled) { sendResponse({ ok: false, filled: 0, reason: "disabled" }); return; }
+//               const filled = doFill(profile, { force: !!msg.force });
+//               sendResponse({ ok: filled > 0, filled });
+//             });
+//           } catch (e) {
+//             sendResponse({ ok: false, error: e && e.message });
+//           }
+//         };
+
+//         if (msg.profile) {
+//           doIt(msg.profile);
+//         } else {
+//           chrome.storage.local.get(["profile"], (res) => {
+//             const profile = res && res.profile ? res.profile : null;
+//             doIt(profile);
+//           });
+//         }
+//         return true; // async
+//       }
+
+//       // toggleAutofill check
+//       if (msg.action === "toggleAutofill") {
+//         sendResponse({ ok: true });
+//         return;
+//       }
+
+//       sendResponse({ ok: false, error: "unknown_action" });
+//       return;
+//     } catch (e) {
+//       safeLog("message handler error", e);
+//       try { sendResponse({ ok: false, error: e && e.message }); } catch (e2) {}
+//       return true;
+//     }
+//   });
+
+//   // ---------- autorun: read profile & run small tries + mutation observer ----------
+//   function autoRunIfEnabled() {
+//     try {
+//       chrome.storage.local.get(["autofillEnabled","profile"], (res) => {
+//         const enabled = (res && res.autofillEnabled !== undefined) ? res.autofillEnabled : true;
+//         const profile = (res && res.profile) ? res.profile : null;
+//         if (!enabled || !profile) return;
+//         // run a couple of attempts
+//         setTimeout(() => { try { doFill(profile, { force: false }); } catch (e) {} }, 600);
+//         setTimeout(() => { try { doFill(profile, { force: false }); } catch (e) {} }, 1400);
+//       });
+//     } catch (e) { safeLog("autoRunIfEnabled error", e); }
+//   }
+
+//   const obsCallback = debounce(() => {
+//     try {
+//       chrome.storage.local.get(["autofillEnabled","profile"], (res) => {
+//         const enabled = (res && res.autofillEnabled !== undefined) ? res.autofillEnabled : true;
+//         const profile = (res && res.profile) ? res.profile : null;
+//         if (!enabled || !profile) return;
+//         try { doFill(profile, { force: false }); } catch (e) {}
+//       });
+//     } catch (e) { safeLog("observer callback error", e); }
+//   }, 700);
+
+//   if (typeof MutationObserver !== "undefined") {
+//     try {
+//       const mo = new MutationObserver(obsCallback);
+//       if (document.body) mo.observe(document.body, { childList: true, subtree: true, attributes: true });
+//     } catch (e) { safeLog("MutationObserver attach failed", e); }
+//   }
+
+//   // run on ready
+//   if (document.readyState === "complete" || document.readyState === "interactive") autoRunIfEnabled();
+//   else window.addEventListener("DOMContentLoaded", autoRunIfEnabled);
+
+//   // storage change: re-run
+//   chrome.storage.onChanged.addListener((changes) => {
+//     if (changes.autofillEnabled || changes.profile) {
+//       autoRunIfEnabled();
+//     }
+//   });
+
+//   safeLog("RowFiller content script v5.1 ready");
+// })();
+
+// content/auth.js (v5.2) - Updated with Strict Matching, Ambiguity Check, and Higher Thresholds
 (function () {
   if (window.__RowFiller_autofill_v5_1_installed) return;
   window.__RowFiller_autofill_v5_1_installed = true;
-  console.log("🔑 RowFiller content/autofill.js v5.1 loaded");
+  console.log(
+    "🔑 RowFiller content/auth.js v5.2 loaded (Strict Auth Matching)"
+  );
 
   // ---------- Utilities ----------
-  const safeLog = (...args) => { try { console.debug("RowFiller:", ...args); } catch(e){} };
+  const safeLog = (...args) => {
+    try {
+      console.debug("RowFiller:", ...args);
+    } catch (e) {}
+  };
 
   function debounce(fn, ms = 300) {
     let t = null;
-    return function () { clearTimeout(t); t = setTimeout(() => fn.apply(this, arguments), ms); };
+    return function () {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, arguments), ms);
+    };
   }
 
   function setNativeValue(el, value) {
@@ -1801,22 +2258,33 @@
       if (desc && desc.set) desc.set.call(el, value);
       else el.value = value;
     } catch (e) {
-      try { el.value = value; } catch (e2) {}
+      try {
+        el.value = value;
+      } catch (e2) {}
     }
     el.dispatchEvent(new Event("input", { bubbles: true }));
     el.dispatchEvent(new Event("change", { bubbles: true }));
-    try { el.dispatchEvent(new Event("blur", { bubbles: true })); } catch(e){}
+    try {
+      el.dispatchEvent(new Event("blur", { bubbles: true }));
+    } catch (e) {}
   }
 
   function isVisible(el) {
     try {
       if (!el) return false;
       if (el.disabled || el.hidden || el.readOnly) return false;
-      // some inputs inside template display may have offsetParent null
-      const style = window.getComputedStyle ? window.getComputedStyle(el) : null;
+      const style = window.getComputedStyle
+        ? window.getComputedStyle(el)
+        : null;
       if (style && style.display === "none") return false;
-      return (el.offsetParent !== null) || el.tagName.toLowerCase() === "select" || el.getAttribute("contenteditable") === "true";
-    } catch (e) { return false; }
+      return (
+        el.offsetParent !== null ||
+        el.tagName.toLowerCase() === "select" ||
+        el.getAttribute("contenteditable") === "true"
+      );
+    } catch (e) {
+      return false;
+    }
   }
 
   function alreadyFilled(el) {
@@ -1827,16 +2295,19 @@
         return !!(el.innerText && el.innerText.trim().length > 0);
       }
       const v = el.value;
-      return (v !== undefined && v !== null && String(v).trim().length > 0);
-    } catch (e) { return false; }
+      return v !== undefined && v !== null && String(v).trim().length > 0;
+    } catch (e) {
+      return false;
+    }
   }
 
-  // ---------- Simple validators ----------
-  const looksLikeEmail = (v) => typeof v === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+  // ---------- Stricter validators ----------
+  const looksLikeEmail = (v) =>
+    typeof v === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); // Require dot
   const looksLikePhone = (v) => {
     if (!v) return false;
     const digits = (String(v).match(/\d/g) || []).length;
-    return digits >= 7; // loose phone check
+    return digits >= 10; // Stricter
   };
   const looksLikeUrl = (v) => {
     if (!v) return false;
@@ -1845,7 +2316,7 @@
   const looksLikeUsername = (v) => {
     if (!v || typeof v !== "string") return false;
     if (v.includes("@") || /\s/.test(v)) return false;
-    return /^[A-Za-z0-9._\-]{2,}$/.test(v);
+    return /^[A-Za-z0-9._\-]{3,}$/.test(v); // Stricter min length
   };
 
   // ---------- Field context extraction ----------
@@ -1854,19 +2325,28 @@
       if (!el) return "";
       if (el.id) {
         try {
-          const lab = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
+          const lab = document.querySelector(
+            `label[for="${CSS.escape(el.id)}"]`
+          );
           if (lab && lab.innerText) return lab.innerText.trim();
         } catch (e) {}
       }
       // ancestor label
       let p = el.parentElement;
       for (let i = 0; i < 6 && p; i++, p = p.parentElement) {
-        if (p.tagName && p.tagName.toLowerCase() === "label") return (p.innerText || "").trim();
+        if (p.tagName && p.tagName.toLowerCase() === "label")
+          return (p.innerText || "").trim();
       }
       // previous sibling textual label
       const prev = el.previousElementSibling;
-      if (prev && (prev.tagName === "LABEL" || prev.tagName === "SPAN" || prev.tagName === "DIV")) {
-        if (prev.innerText && prev.innerText.trim()) return prev.innerText.trim();
+      if (
+        prev &&
+        (prev.tagName === "LABEL" ||
+          prev.tagName === "SPAN" ||
+          prev.tagName === "DIV")
+      ) {
+        if (prev.innerText && prev.innerText.trim())
+          return prev.innerText.trim();
       }
       // aria-labelledby
       const labId = el.getAttribute && el.getAttribute("aria-labelledby");
@@ -1876,7 +2356,9 @@
       }
       if (el.title && el.title.trim()) return el.title.trim();
       return "";
-    } catch (e) { return ""; }
+    } catch (e) {
+      return "";
+    }
   }
 
   function getFieldParts(el) {
@@ -1893,11 +2375,15 @@
         const parent = el.parentElement;
         if (parent) {
           nearby = Array.from(parent.childNodes)
-            .filter(n => n.nodeType === Node.TEXT_NODE)
-            .map(n => (n.textContent || "").trim()).join(" ");
+            .filter((n) => n.nodeType === Node.TEXT_NODE)
+            .map((n) => (n.textContent || "").trim())
+            .join(" ");
         }
       } catch (e) {}
-      const combined = [label, name, id, placeholder, aria, title, nearby].filter(Boolean).join(" ").toLowerCase();
+      const combined = [label, name, id, placeholder, aria, title, nearby]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
       return {
         label: label.toLowerCase(),
         name: name.toLowerCase(),
@@ -1906,32 +2392,112 @@
         aria: (aria || "").toLowerCase(),
         title: (title || "").toLowerCase(),
         nearby: (nearby || "").toLowerCase(),
-        combined
+        combined,
       };
     } catch (e) {
-      return { label: "", name: "", id: "", placeholder: "", aria: "", title: "", nearby: "", combined: "" };
+      return {
+        label: "",
+        name: "",
+        id: "",
+        placeholder: "",
+        aria: "",
+        title: "",
+        nearby: "",
+        combined: "",
+      };
     }
   }
 
-  // ---------- Role configuration ----------
-  // pos regexes checked on parts with weights; neg penalizes strongly
+  // ---------- Role configuration with higher thresholds ----------
   const ROLE_CFG = {
-    firstname:   { pos: [/\bfirst(?:[_\s-]?name)?\b/, /\bgiven\b/], neg: [], minAuto: 6, minForce: 10 },
-    lastname:    { pos: [/\blast(?:[_\s-]?name)?\b/, /\bsurname\b/], neg: [], minAuto: 6, minForce: 10 },
-    fullname:    { pos: [/\bfull(?:[_\s-]?name)?\b/, /^\bname$/], neg: [], minAuto: 6, minForce: 10 },
-    username:    { pos: [/^username$|user[_\s-]?name|\buser_id\b|\buserid\b|\blogin\b|handle/], neg: [/\bemail\b|\bmail\b|\bpassword\b|\bphone\b|\baddress\b/], minAuto: 12, minForce: 18 },
-    email:       { pos: [/\bemail\b/, /\be-?mail\b/], neg: [/business|work|company/], minAuto: 6, minForce: 12 },
-    businessEmail:{ pos: [/\b(business|work|company|office)[\s_-]*email\b/], neg: [], minAuto: 8, minForce: 14 },
-    password:    { pos: [/^password$|pass(?:word)?|pwd/], neg: [/confirm|verify|retype|repeat|new|current/], minAuto: 6, minForce: 10 },
-    phone:       { pos: [/\bphone\b/, /\bmobile\b/, /\btel\b/, /\bcontact\b/], neg: [/fax/], minAuto: 5, minForce: 9 },
-    address:     { pos: [/\baddress\b/, /\bstreet\b/, /\baddr\b/], neg: [], minAuto: 5, minForce: 9 },
-    city:        { pos: [/\bcity\b/], neg: [], minAuto: 5, minForce: 9 },
-    state:       { pos: [/\bstate\b|\bprovince\b|\bregion\b/], neg: [], minAuto: 5, minForce: 9 },
-    postcode:    { pos: [/\bzip\b|\bpostal\b|\bpostcode\b|\bpin\b/], neg: [], minAuto: 5, minForce: 9 },
-    country:     { pos: [/\bcountry\b/], neg: [], minAuto: 5, minForce: 9 },
-    location:    { pos: [/\blocation\b/, /\bplace\b/], neg: [], minAuto: 4, minForce: 8 },
-    website:     { pos: [/\bwebsite\b|\bhomepage\b|\bsite\b|\bweb[_\s-]?url\b|\burl\b/], neg: [/email/], minAuto: 7, minForce: 12 },
-    description: { pos: [/\bdescription\b|\babout\b|\bbio\b|\bsummary\b/], neg: [], minAuto: 5, minForce: 9 }
+    firstname: {
+      pos: [/\bfirst(?:[_\s-]?name)?\b/, /\bgiven\b/],
+      neg: [/username/i, /social/i],
+      minAuto: 8,
+      minForce: 12,
+    }, // Increased
+    lastname: {
+      pos: [/\blast(?:[_\s-]?name)?\b/, /\bsurname\b/],
+      neg: [/username/i, /social/i],
+      minAuto: 8,
+      minForce: 12,
+    },
+    fullname: {
+      pos: [/\bfull(?:[_\s-]?name)?\b/, /^\bname$/],
+      neg: [/username/i, /social/i],
+      minAuto: 8,
+      minForce: 12,
+    },
+    username: {
+      pos: [
+        /^username$|user[_\s-]?name|\buser_id\b|\buserid\b|\blogin\b|handle/,
+      ],
+      neg: [/\bemail\b|\bmail\b|\bpassword\b|\bphone\b|\baddress\b/, /name/i],
+      minAuto: 15,
+      minForce: 22,
+    }, // Stricter
+    email: {
+      pos: [/\bemail\b/, /\be-?mail\b/],
+      neg: [/business|work|company/, /social/i],
+      minAuto: 8,
+      minForce: 14,
+    },
+    businessEmail: {
+      pos: [/\b(business|work|company|office)[\s_-]*email\b/],
+      neg: [/social/i],
+      minAuto: 10,
+      minForce: 16,
+    },
+    password: {
+      pos: [/^password$|pass(?:word)?|pwd/],
+      neg: [/confirm|verify|retype|repeat|new|current/],
+      minAuto: 8,
+      minForce: 12,
+    },
+    phone: {
+      pos: [/\bphone\b/, /\bmobile\b/, /\btel\b/, /\bcontact\b/],
+      neg: [/fax/, /email/i, /username/i],
+      minAuto: 7,
+      minForce: 11,
+    },
+    address: {
+      pos: [/\baddress\b/, /\bstreet\b/, /\baddr\b/],
+      neg: [/email/i, /username/i],
+      minAuto: 7,
+      minForce: 11,
+    },
+    city: { pos: [/\bcity\b/], neg: [], minAuto: 7, minForce: 11 },
+    state: {
+      pos: [/\bstate\b|\bprovince\b|\bregion\b/],
+      neg: [],
+      minAuto: 7,
+      minForce: 11,
+    },
+    postcode: {
+      pos: [/\bzip\b|\bpostal\b|\bpostcode\b|\bpin\b/],
+      neg: [],
+      minAuto: 7,
+      minForce: 11,
+    },
+    country: { pos: [/\bcountry\b/], neg: [], minAuto: 7, minForce: 11 },
+    location: {
+      pos: [/\blocation\b/, /\bplace\b/],
+      neg: [/username/i],
+      minAuto: 6,
+      minForce: 10,
+    },
+    website: {
+      pos: [/\bwebsite\b|\bhomepage\b|\bsite\b|\bweb[_\s-]?url\b|\burl\b/],
+      neg: [/email/, /social/i, /username/i],
+      minAuto: 9,
+      minForce: 14,
+    },
+    description: {
+      pos: [/\bdescription\b|\babout\b|\bbio\b|\bsummary\b/],
+      neg: [/username/i, /email/i],
+      minAuto: 7,
+      minForce: 11,
+    },
   };
 
   // ---------- scoring ----------
@@ -1947,12 +2513,12 @@
       if (rx.test(ctxParts.nearby)) score += 1;
     }
     if (cfg.neg && cfg.neg.length) {
-      for (const nrx of cfg.neg) if (nrx.test(ctxParts.combined)) score -= 18;
+      for (const nrx of cfg.neg) if (nrx.test(ctxParts.combined)) score -= 25; // Stronger penalty
     }
     return score;
   }
 
-  // ---------- username multi-signal guard ----------
+  // ---------- username multi-signal guard (stricter) ----------
   function usernameSignals(ctxParts, el) {
     let signals = 0;
     const rx = /username|user[_\s-]?name|login|handle|userid|user id/;
@@ -1960,12 +2526,15 @@
     if (rx.test(ctxParts.name)) signals++;
     if (rx.test(ctxParts.id)) signals++;
     if (rx.test(ctxParts.placeholder)) signals++;
-    const ac = (el.getAttribute && (el.getAttribute("autocomplete") || "") || "").toLowerCase();
+    const ac = (
+      (el.getAttribute && (el.getAttribute("autocomplete") || "")) ||
+      ""
+    ).toLowerCase();
     if (ac.includes("username")) signals++;
-    return signals; // integer number of signals (0..5)
+    return signals;
   }
 
-  // ---------- match role function (returns role & score) ----------
+  // ---------- match role function with ambiguity check ----------
   function matchRoleAndScore(el) {
     if (!el) return null;
     if (!isVisible(el)) return null;
@@ -1980,7 +2549,8 @@
       const cfg = ROLE_CFG.email;
       const sc = scoreForCfg(ctx, cfg);
       // business detection if label suggests business
-      if (/\bbusiness\b|\bwork\b|\bcompany\b/.test(ctx.combined)) return { role: "businessEmail", score: sc + 6 };
+      if (/\bbusiness\b|\bwork\b|\bcompany\b/.test(ctx.combined))
+        return { role: "businessEmail", score: sc + 6 };
       return { role: "email", score: sc + 8 };
     }
     if (type === "tel") {
@@ -1992,47 +2562,82 @@
     if (tag === "textarea") {
       const cfg = ROLE_CFG.description;
       const sc = scoreForCfg(ctx, cfg);
-      if (sc >= (cfg.minAuto || 5)) return { role: "description", score: sc + 2 };
+      if (sc >= (cfg.minAuto || 5))
+        return { role: "description", score: sc + 2 };
     }
 
-    // iterate roles and compute best score
-    let best = null, bestScore = -Infinity;
+    // iterate roles and compute scores
+    const scores = [];
     for (const [role, cfg] of Object.entries(ROLE_CFG)) {
-      // prefer textarea rule handled above
-      let sc = scoreForCfg(ctx, cfg);
-      // small boost when placeholder explicitly matches
-      if (/(?:^|\s)\w+$/.test(ctx.placeholder)) sc += 0;
-      if (sc > bestScore) { bestScore = sc; best = role; }
+      const sc = scoreForCfg(ctx, cfg);
+      if (sc > 0) scores.push({ role, score: sc });
     }
 
-    if (!best) return null;
-    return { role: best, score: bestScore };
+    if (scores.length === 0) return null;
+
+    // Sort descending
+    scores.sort((a, b) => b.score - a.score);
+
+    // Ambiguity check: best must be at least 5 points higher than second (stricter)
+    if (scores.length > 1 && scores[0].score - scores[1].score < 5) {
+      safeLog(
+        `Ambiguous field: ${scores[0].role} (${scores[0].score}) vs ${scores[1].role} (${scores[1].score}) - skipping`
+      );
+      return null;
+    }
+
+    return { role: scores[0].role, score: scores[0].score };
   }
 
-  // ---------- fallback infer role for required fields ----------
+  // ---------- fallback infer role for required fields (stricter) ----------
   function inferRoleFallbackForRequired(el) {
     try {
       const ctx = getFieldParts(el);
-      // quick heuristics
       if ((el.type || "").toLowerCase() === "email") return "email";
       if ((el.type || "").toLowerCase() === "password") return "password";
       if ((el.type || "").toLowerCase() === "tel") return "phone";
-      if (/\bfirst(?:[_\s-]?name)?\b/.test(ctx.combined)) return "firstname";
-      if (/\blast(?:[_\s-]?name)?\b/.test(ctx.combined)) return "lastname";
-      if (/\bname\b/.test(ctx.label) && !/\bfirst\b|\blast\b/.test(ctx.label)) return "fullname";
-      if (/\bemail\b/.test(ctx.combined)) return "email";
+      if (
+        /\bfirst(?:[_\s-]?name)?\b/.test(ctx.combined) &&
+        !/username/i.test(ctx.combined)
+      )
+        return "firstname";
+      if (
+        /\blast(?:[_\s-]?name)?\b/.test(ctx.combined) &&
+        !/username/i.test(ctx.combined)
+      )
+        return "lastname";
+      if (
+        /\bname\b/.test(ctx.label) &&
+        !/\bfirst\b|\blast\b|username/i.test(ctx.label)
+      )
+        return "fullname";
+      if (/\bemail\b/.test(ctx.combined) && !/business/i.test(ctx.combined))
+        return "email";
       return null;
-    } catch (e) { return null; }
+    } catch (e) {
+      return null;
+    }
   }
 
   // ---------- prepare values ----------
   function prepareValues(profile) {
-    const p = (profile && profile.profile) ? profile.profile : (profile || {});
+    const p = profile && profile.profile ? profile.profile : profile || {};
     const first = p.firstname || p.firstName || "";
     const last = p.lastname || p.lastName || "";
-    const fullnameFromParts = (first || last) ? `${(first || "").trim()} ${(last || "").trim()}`.trim() : "";
-    const fullname = (p.fullname || p.fullName || fullnameFromParts || "").trim();
-    const password = (p.activePassword === "submissionPassword") ? (p.submissionPassword || "") : (p.emailPassword || p.password || "");
+    const fullnameFromParts =
+      first || last
+        ? `${(first || "").trim()} ${(last || "").trim()}`.trim()
+        : "";
+    const fullname = (
+      p.fullname ||
+      p.fullName ||
+      fullnameFromParts ||
+      ""
+    ).trim();
+    const password =
+      p.activePassword === "submissionPassword"
+        ? p.submissionPassword || ""
+        : p.emailPassword || p.password || "";
     return {
       firstname: first,
       lastname: last,
@@ -2049,12 +2654,18 @@
       country: p.country || "",
       location: p.location || "",
       website: p.website || "",
-      description: p.description || p.bio || ""
+      description: p.description || p.bio || "",
     };
   }
 
   // ---------- actual fill attempt for one element ----------
-  function tryFillElement(el, role, values, overwrite = false, isForce = false) {
+  function tryFillElement(
+    el,
+    role,
+    values,
+    overwrite = false,
+    isForce = false
+  ) {
     try {
       if (!el || !role) return false;
       if (!isVisible(el)) return false;
@@ -2063,38 +2674,49 @@
       const v = values[role];
       if (!v) return false;
 
-      // validations to prevent wrong placements
+      // validations to prevent wrong placements (stricter)
       const tag = (el.tagName || "").toLowerCase();
       const type = (el.type || "").toLowerCase();
 
-      if ((role === "email" || role === "businessEmail") && !looksLikeEmail(v)) return false;
+      if ((role === "email" || role === "businessEmail") && !looksLikeEmail(v))
+        return false;
       if (role === "phone" && !looksLikePhone(v)) return false;
       if (role === "website" && !looksLikeUrl(v)) return false;
       if (role === "username" && !looksLikeUsername(v)) return false;
 
       // avoid putting email into textarea or url inputs
-      if ((role === "email") && (tag === "textarea" || type === "url")) return false;
-      if ((role === "username") && ["email","tel","url"].includes(type)) return false;
+      if (role === "email" && (tag === "textarea" || type === "url"))
+        return false;
+      if (role === "username" && ["email", "tel", "url"].includes(type))
+        return false;
 
       // select option handling
       if (tag === "select") {
         for (const opt of Array.from(el.options)) {
           if (!opt) continue;
           try {
-            if ((opt.value && opt.value.toLowerCase() === String(v).toLowerCase()) || (opt.text && opt.text.toLowerCase() === String(v).toLowerCase())) {
+            if (
+              (opt.value &&
+                opt.value.toLowerCase() === String(v).toLowerCase()) ||
+              (opt.text && opt.text.toLowerCase() === String(v).toLowerCase())
+            ) {
               el.value = opt.value;
               el.dispatchEvent(new Event("change", { bubbles: true }));
               if (el.dataset) el.dataset.rowfiller = "filled";
               return true;
             }
-          } catch(e){}
+          } catch (e) {}
         }
         return false;
       }
 
       // contenteditable
       if (el.getAttribute && el.getAttribute("contenteditable") === "true") {
-        try { document.execCommand && document.execCommand('insertText', false, v); } catch(e){ el.innerText = v; }
+        try {
+          document.execCommand && document.execCommand("insertText", false, v);
+        } catch (e) {
+          el.innerText = v;
+        }
         if (el.dataset) el.dataset.rowfiller = "filled";
         return true;
       }
@@ -2112,17 +2734,31 @@
   function doFill(profile, options = { force: false }) {
     try {
       // skip google account pages for security
-      if (location.hostname.includes("accounts.google.com") || location.hostname.endsWith("google.com")) {
+      if (
+        location.hostname.includes("accounts.google.com") ||
+        location.hostname.endsWith("google.com")
+      ) {
         safeLog("Skipping autofill on Google domains for safety");
         return 0;
       }
 
       const values = prepareValues(profile);
-      const nodes = Array.from(document.querySelectorAll("input, textarea, select, [contenteditable='true']"));
+      const nodes = Array.from(
+        document.querySelectorAll(
+          "input, textarea, select, [contenteditable='true']"
+        )
+      );
 
       // sort top-to-bottom so natural order is preferred
       nodes.sort((a, b) => {
-        try { return (a.getBoundingClientRect().top || 0) - (b.getBoundingClientRect().top || 0); } catch (e) { return 0; }
+        try {
+          return (
+            (a.getBoundingClientRect().top || 0) -
+            (b.getBoundingClientRect().top || 0)
+          );
+        } catch (e) {
+          return 0;
+        }
       });
 
       const usedRoles = new Set();
@@ -2135,10 +2771,13 @@
           // compute match and score
           const ms = matchRoleAndScore(el);
           let role = ms && ms.role ? ms.role : null;
-          const score = ms && (typeof ms.score === "number") ? ms.score : 0;
+          const score = ms && typeof ms.score === "number" ? ms.score : 0;
 
           // if force & element required but no role computed, try fallback heuristics
-          const isRequired = !!(el.required || (el.getAttribute && el.getAttribute("aria-required") === "true"));
+          const isRequired = !!(
+            el.required ||
+            (el.getAttribute && el.getAttribute("aria-required") === "true")
+          );
           if (!role && options.force && isRequired) {
             role = inferRoleFallbackForRequired(el);
             safeLog("Fallback required role inferred:", role, el);
@@ -2150,18 +2789,28 @@
           if (role === "username") {
             const ctx = getFieldParts(el);
             const signals = usernameSignals(ctx, el);
-            // require at least 3 signals in force mode; at least 2 in auto mode (but only if element empty)
+            // require at least 4 signals in force mode; at least 3 in auto mode
             if (options.force) {
-              if (signals < 3) { safeLog("Username skipped (not enough signals)", signals, ctx); continue; }
+              if (signals < 4) {
+                safeLog("Username skipped (not enough signals)", signals, ctx);
+                continue;
+              }
             } else {
-              if (signals < 2) { safeLog("Username skipped (auto: not enough signals)", signals, ctx); continue; }
+              if (signals < 3) {
+                safeLog(
+                  "Username skipped (auto: not enough signals)",
+                  signals,
+                  ctx
+                );
+                continue;
+              }
             }
           }
 
           // threshold decision:
           const cfg = ROLE_CFG[role] || {};
-          const minAuto = cfg.minAuto || 6;
-          const minForce = cfg.minForce || (minAuto + 4);
+          const minAuto = cfg.minAuto || 8;
+          const minForce = cfg.minForce || minAuto + 4;
 
           // Decide whether to attempt to fill:
           // - Auto mode (not force): only fill if field is empty and score >= minAuto
@@ -2182,7 +2831,13 @@
             continue;
           }
 
-          const ok = tryFillElement(el, role, values, options.force, options.force);
+          const ok = tryFillElement(
+            el,
+            role,
+            values,
+            options.force,
+            options.force
+          );
           if (ok) {
             filled++;
             usedRoles.add(role);
@@ -2192,51 +2847,13 @@
         }
       }
 
-      safeLog(`doFill completed (force=${!!options.force}) -> filled ${filled}`);
+      safeLog(
+        `doFill completed (force=${!!options.force}) -> filled ${filled}`
+      );
       return filled;
     } catch (e) {
       safeLog("doFill top-level error:", e);
       return 0;
-    }
-  }
-
-  // ---------- matchRoleAndScore helper uses config & scoring ----------
-  function matchRoleAndScore(el) {
-    try {
-      if (!isVisible(el)) return null;
-      const type = (el.type || "").toLowerCase();
-      const tag = (el.tagName || "").toLowerCase();
-      const parts = getFieldParts(el);
-
-      // HTML-level shortcuts
-      if (type === "password") return { role: "password", score: 200 };
-      if (type === "email") {
-        let score = 0;
-        if (ROLE_CFG.email) score = scoreForCfg(parts, ROLE_CFG.email) + 8;
-        // promote business email when label suggests company/work
-        if (/\bbusiness\b|\bwork\b|\bcompany\b/.test(parts.combined)) return { role: "businessEmail", score: score + 6 };
-        return { role: "email", score };
-      }
-      if (type === "tel") return { role: "phone", score: (ROLE_CFG.phone ? scoreForCfg(parts, ROLE_CFG.phone) + 8 : 10) };
-
-      // textarea case
-      if (tag === "textarea") {
-        const cfg = ROLE_CFG.description;
-        const sc = cfg ? scoreForCfg(parts, cfg) : 0;
-        if (sc >= (cfg ? cfg.minAuto : 5)) return { role: "description", score: sc + 4 };
-      }
-
-      // compute best scoring role
-      let best = null, bestScore = -Infinity;
-      for (const [role, cfg] of Object.entries(ROLE_CFG)) {
-        const sc = scoreForCfg(parts, cfg);
-        if (sc > bestScore) { bestScore = sc; best = role; }
-      }
-      if (!best) return null;
-      return { role: best, score: bestScore };
-    } catch (e) {
-      safeLog("matchRoleAndScore error:", e);
-      return null;
     }
   }
 
@@ -2248,14 +2865,24 @@
         return true;
       }
 
-      if (msg.action === "autofill" || msg.action === "autofillProfile" || msg.action === "autofillAuth") {
+      if (
+        msg.action === "autofill" ||
+        msg.action === "autofillProfile" ||
+        msg.action === "autofillAuth"
+      ) {
         // allow profile to be passed in message; else read from storage
         const doIt = (profile) => {
           try {
             // check enabled flag
             chrome.storage.local.get(["autofillEnabled"], (res) => {
-              const enabled = (res && res.autofillEnabled !== undefined) ? res.autofillEnabled : true;
-              if (!enabled) { sendResponse({ ok: false, filled: 0, reason: "disabled" }); return; }
+              const enabled =
+                res && res.autofillEnabled !== undefined
+                  ? res.autofillEnabled
+                  : true;
+              if (!enabled) {
+                sendResponse({ ok: false, filled: 0, reason: "disabled" });
+                return;
+              }
               const filled = doFill(profile, { force: !!msg.force });
               sendResponse({ ok: filled > 0, filled });
             });
@@ -2285,7 +2912,9 @@
       return;
     } catch (e) {
       safeLog("message handler error", e);
-      try { sendResponse({ ok: false, error: e && e.message }); } catch (e2) {}
+      try {
+        sendResponse({ ok: false, error: e && e.message });
+      } catch (e2) {}
       return true;
     }
   });
@@ -2293,37 +2922,64 @@
   // ---------- autorun: read profile & run small tries + mutation observer ----------
   function autoRunIfEnabled() {
     try {
-      chrome.storage.local.get(["autofillEnabled","profile"], (res) => {
-        const enabled = (res && res.autofillEnabled !== undefined) ? res.autofillEnabled : true;
-        const profile = (res && res.profile) ? res.profile : null;
+      chrome.storage.local.get(["autofillEnabled", "profile"], (res) => {
+        const enabled =
+          res && res.autofillEnabled !== undefined ? res.autofillEnabled : true;
+        const profile = res && res.profile ? res.profile : null;
         if (!enabled || !profile) return;
         // run a couple of attempts
-        setTimeout(() => { try { doFill(profile, { force: false }); } catch (e) {} }, 600);
-        setTimeout(() => { try { doFill(profile, { force: false }); } catch (e) {} }, 1400);
+        setTimeout(() => {
+          try {
+            doFill(profile, { force: false });
+          } catch (e) {}
+        }, 600);
+        setTimeout(() => {
+          try {
+            doFill(profile, { force: false });
+          } catch (e) {}
+        }, 1400);
       });
-    } catch (e) { safeLog("autoRunIfEnabled error", e); }
+    } catch (e) {
+      safeLog("autoRunIfEnabled error", e);
+    }
   }
 
   const obsCallback = debounce(() => {
     try {
-      chrome.storage.local.get(["autofillEnabled","profile"], (res) => {
-        const enabled = (res && res.autofillEnabled !== undefined) ? res.autofillEnabled : true;
-        const profile = (res && res.profile) ? res.profile : null;
+      chrome.storage.local.get(["autofillEnabled", "profile"], (res) => {
+        const enabled =
+          res && res.autofillEnabled !== undefined ? res.autofillEnabled : true;
+        const profile = res && res.profile ? res.profile : null;
         if (!enabled || !profile) return;
-        try { doFill(profile, { force: false }); } catch (e) {}
+        try {
+          doFill(profile, { force: false });
+        } catch (e) {}
       });
-    } catch (e) { safeLog("observer callback error", e); }
+    } catch (e) {
+      safeLog("observer callback error", e);
+    }
   }, 700);
 
   if (typeof MutationObserver !== "undefined") {
     try {
       const mo = new MutationObserver(obsCallback);
-      if (document.body) mo.observe(document.body, { childList: true, subtree: true, attributes: true });
-    } catch (e) { safeLog("MutationObserver attach failed", e); }
+      if (document.body)
+        mo.observe(document.body, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+        });
+    } catch (e) {
+      safeLog("MutationObserver attach failed", e);
+    }
   }
 
   // run on ready
-  if (document.readyState === "complete" || document.readyState === "interactive") autoRunIfEnabled();
+  if (
+    document.readyState === "complete" ||
+    document.readyState === "interactive"
+  )
+    autoRunIfEnabled();
   else window.addEventListener("DOMContentLoaded", autoRunIfEnabled);
 
   // storage change: re-run
@@ -2333,5 +2989,5 @@
     }
   });
 
-  safeLog("RowFiller content script v5.1 ready");
+  safeLog("RowFiller auth script v5.2 ready");
 })();

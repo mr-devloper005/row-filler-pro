@@ -1252,9 +1252,6 @@
 //   await loadAndRender();
 // });
 
-
-
-
 // // popup.js
 // window.__ROW_FILLER_ROWS = []; // expose for debugging
 
@@ -1701,10 +1698,6 @@
 //   await loadAndRender();
 // });
 
-
-
-
-
 // // popup.js
 // window.__ROW_FILLER_ROWS = []; // expose for debugging
 
@@ -2150,7 +2143,6 @@
 //   await loadAndRender();
 // });
 
-
 // best popup.js
 
 // // popup.js
@@ -2320,16 +2312,7 @@
 //   await loadAndRender();
 // });
 
-
-
 // end
-
-
-
-
-
-
-
 
 // // popup.js
 // window.__ROW_FILLER_ROWS = [];
@@ -2459,28 +2442,6 @@
 //   // Load profile into UI immediately
 //   loadProfileToUI();
 // });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // // popup.js (revised)
 // (() => {
@@ -2683,34 +2644,6 @@
 
 // })();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // // popup.js (updated)
 // (() => {
 //   const STORAGE_KEY = "profile";
@@ -2746,7 +2679,6 @@
 //   const clearAllNavBtn = document.getElementById("clearAllNav");
 //   const statusDiv = document.getElementById("status");
 
-  
 // function setStatus(msg, short = false, success = null) {
 //   if (!statusDiv) return;
 //   statusDiv.textContent = msg || "";
@@ -2754,13 +2686,12 @@
 //   else if (success === false) statusDiv.style.color = "var(--accent2)";
 //   else statusDiv.style.color = "var(--muted)";
 //   if (!short) {
-//     setTimeout(() => { 
-//       statusDiv.textContent = ""; 
-//       statusDiv.style.color = "var(--muted)"; 
+//     setTimeout(() => {
+//       statusDiv.textContent = "";
+//       statusDiv.style.color = "var(--muted)";
 //     }, 2500);
 //   }
 // }
-
 
 //   function getActivePasswordChoice() {
 //     const chosen = document.querySelector('input[name="activePassword"]:checked');
@@ -2988,25 +2919,6 @@
 //   });
 // })();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // // popup.js (updated - toggle + injection + save/load)
 // (() => {
 //   const STORAGE_KEY = "profile";
@@ -3045,9 +2957,6 @@
 //     const chosen = document.querySelector('input[name="activePassword"]:checked');
 //     return chosen ? chosen.value : "emailPassword";
 //   }
-
-
-  
 
 //   function gatherProfileFromUI() {
 //     const activePassword = getActivePasswordChoice();
@@ -3236,40 +3145,254 @@
 //   });
 // })();
 
+// // popup.js (updated - toggle + injection + save/load + force autofill)
+// (() => {
+//   const STORAGE_KEY = "profile";
+//   const TOGGLE_KEY = "autofillEnabled";
 
+//   // DOM references (UI is from your popup.html)
+//   const statusDiv = document.getElementById("status");
+//   const clearAllNavBtn = document.getElementById("clearAllNav");
+//   const saveProfileBtn = document.getElementById("saveProfile");
+//   const applyProfileOnTabBtn = document.getElementById("applyProfileOnTab");
+//   const toggleBtn = document.getElementById("toggleAutofill"); // optional - if present in UI
+//   const toggleStateSpan = document.getElementById("toggleState"); // optional
 
+//   // input IDs used in popup.html
+//   const ids = [
+//     "firstname","lastname","fullname","username","email","businessEmail",
+//     "emailPassword","submissionPassword","phone","title","category","subcategory",
+//     "address","city","state","postcode","country","location",
+//     "facebook","linkedin","instagram","twitter","youtube","description"
+//   ];
+//   const inputs = {};
+//   ids.forEach(id => inputs[id] = document.getElementById(id));
 
+//   function setStatus(msg, short = false, success = null) {
+//     if (!statusDiv) return;
+//     statusDiv.textContent = msg || "";
+//     if (success === true) statusDiv.style.color = "var(--success)";
+//     else if (success === false) statusDiv.style.color = "var(--accent2)";
+//     else statusDiv.style.color = "var(--muted)";
+//     if (!short) {
+//       setTimeout(() => { if (statusDiv) { statusDiv.textContent = ""; statusDiv.style.color = "var(--muted)"; } }, 2800);
+//     }
+//   }
 
+//   function getActivePasswordChoice() {
+//     const chosen = document.querySelector('input[name="activePassword"]:checked');
+//     return chosen ? chosen.value : "emailPassword";
+//   }
 
+//   function gatherProfileFromUI() {
+//     const profile = {};
+//     ids.forEach(id => {
+//       const el = inputs[id];
+//       if (!el) profile[id] = "";
+//       else profile[id] = (el.value || "").toString().trim();
+//     });
+//     profile.activePassword = getActivePasswordChoice();
+//     profile.savedAt = new Date().toISOString();
+//     return profile;
+//   }
 
+//   function loadProfileToUI(profile) {
+//     if (!profile) return;
+//     ids.forEach(id => {
+//       const el = inputs[id];
+//       if (el) el.value = profile[id] || "";
+//     });
+//     if (profile.activePassword) {
+//       const r = document.querySelector(`input[name="activePassword"][value="${profile.activePassword}"]`);
+//       if (r) r.checked = true;
+//     }
+//   }
 
+//   function saveProfile() {
+//     const profile = gatherProfileFromUI();
+//     chrome.storage.local.set({ profile }, () => {
+//       if (chrome.runtime.lastError) {
+//         console.error("Save error:", chrome.runtime.lastError);
+//         setStatus("Failed to save profile (console).", false, false);
+//       } else {
+//         setStatus("Profile saved ✔", false, true);
+//       }
+//     });
+//   }
 
+//   function loadProfileFromStorage() {
+//     chrome.storage.local.get([STORAGE_KEY, TOGGLE_KEY], (res) => {
+//       if (res && res.profile) loadProfileToUI(res.profile);
+//       const enabled = (res && res[TOGGLE_KEY] !== undefined) ? res[TOGGLE_KEY] : true;
+//       updateToggleUI(enabled);
+//       setStatus("Profile loaded", true);
+//     });
+//   }
 
+//   function updateToggleUI(enabled) {
+//     if (!toggleBtn || !toggleStateSpan) return;
+//     if (enabled) {
+//       toggleBtn.classList.add("on");
+//       toggleStateSpan.textContent = "On";
+//       toggleBtn.title = "Autofill enabled — click to disable";
+//     } else {
+//       toggleBtn.classList.remove("on");
+//       toggleStateSpan.textContent = "Off";
+//       toggleBtn.title = "Autofill disabled — click to enable";
+//     }
+//   }
 
+//   function setAutofillEnabled(enabled) {
+//     chrome.storage.local.set({ [TOGGLE_KEY]: !!enabled }, () => {
+//       updateToggleUI(enabled);
+//       setStatus(enabled ? "Autofill: ON" : "Autofill: OFF", true, enabled);
+//       // notify open tabs (best-effort)
+//       chrome.tabs.query({}, (tabs) => {
+//         tabs.forEach(t => {
+//           try { chrome.tabs.sendMessage(t.id, { action: "toggleAutofill", enabled }); } catch (e) {}
+//         });
+//       });
+//     });
+//   }
 
+//   // Clear stored profile and UI
+//   window.clearAll = function () {
+//     chrome.storage.local.remove([STORAGE_KEY], () => {
+//       ids.forEach(id => { if (inputs[id]) inputs[id].value = ""; });
+//       const r = document.querySelector('input[name="activePassword"][value="emailPassword"]');
+//       if (r) r.checked = true;
+//       setStatus("Cleared profile and UI", false, true);
+//     });
+//   };
 
+//   // Try to inject content scripts (MV3 preferred)
+//   function tryInjectContentScripts(tabId, callback) {
+//     if (chrome.scripting && chrome.scripting.executeScript) {
+//       try {
+//         chrome.scripting.executeScript({ target: { tabId }, files: ['content/autofill.js', 'content/auth.js'] }, () => {
+//           callback && callback();
+//         });
+//       } catch (e) {
+//         console.warn("scripting.exec failed:", e);
+//         callback && callback();
+//       }
+//     } else if (chrome.tabs && chrome.tabs.executeScript) {
+//       try {
+//         chrome.tabs.executeScript(tabId, { file: 'content/autofill.js' }, () => {
+//           chrome.tabs.executeScript(tabId, { file: 'content/auth.js' }, () => {
+//             callback && callback();
+//           });
+//         });
+//       } catch (e) {
+//         console.warn("tabs.exec failed:", e);
+//         callback && callback();
+//       }
+//     } else {
+//       callback && callback();
+//     }
+//   }
 
+//   // send message and retry injection once if no response
+//   function sendAutofillMessageToTab(tabId, profile, force, cb) {
+//     let triedInject = false;
+//     function sendOnce() {
+//       // try auth first (for password/email focused sites) then general autofill
+//       chrome.tabs.sendMessage(tabId, { action: "autofillAuth", profile, force }, (resp) => {
+//         if (resp && resp.ok) {
+//           return cb && cb(null, resp);
+//         }
+//         // fallback to broader autofill message
+//         chrome.tabs.sendMessage(tabId, { action: "autofillProfile", profile, force }, (resp2) => {
+//           if (resp2 && resp2.ok) return cb && cb(null, resp2);
+//           // if nothing responded, try injecting once
+//           if (!triedInject) {
+//             triedInject = true;
+//             tryInjectContentScripts(tabId, () => {
+//               setTimeout(() => {
+//                 chrome.tabs.sendMessage(tabId, { action: "autofillAuth", profile, force }, (resp3) => {
+//                   if (resp3 && resp3.ok) return cb && cb(null, resp3);
+//                   chrome.tabs.sendMessage(tabId, { action: "autofillProfile", profile, force }, (resp4) => {
+//                     if (resp4 && resp4.ok) return cb && cb(null, resp4);
+//                     return cb && cb(new Error("Autofill failed or no response after injection"), resp4 || resp3 || resp2 || resp);
+//                   });
+//                 });
+//               }, 200);
+//             });
+//           } else {
+//             cb && cb(new Error("Autofill failed or no response"), resp2 || resp);
+//           }
+//         });
+//       });
+//     }
+//     sendOnce();
+//   }
 
+//   // Called when user presses "Autofill on Tab" (force/hard mode)
+//   function autofillOnActiveTab() {
+//     const profile = gatherProfileFromUI();
+//     // save first
+//     chrome.storage.local.set({ profile }, () => {
+//       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+//         if (!tabs || !tabs[0]) {
+//           setStatus("No active tab", false, false);
+//           return;
+//         }
+//         const tabId = tabs[0].id;
+//         setStatus("Trying hard autofill on page...", true);
+//         tryInjectContentScripts(tabId, () => {
+//           // inside sendAutofillMessageToTab → callback
+// sendAutofillMessageToTab(tabId, profile, true, (err, resp) => {
+//   if (resp && (resp.ok || (resp.filled && resp.filled > 0))) {
+//     setStatus(`Autofill applied (${resp.filled || "?"})`, false, true);
+//   } else if (err) {
+//     console.warn("Autofill error:", err, resp);
+//     setStatus("Autofill ran, but response missing. Check console.", false, true);
+//   } else {
+//     setStatus("Autofill: nothing filled.", false, false);
+//   }
+// });
 
+//         });
+//       });
+//     });
+//   }
 
+//   // Event wiring
+//   document.addEventListener("DOMContentLoaded", () => {
+//     loadProfileFromStorage();
 
+//     if (saveProfileBtn) {
+//       saveProfileBtn.addEventListener("click", (e) => { e.preventDefault(); saveProfile(); });
+//     }
+//     if (applyProfileOnTabBtn) {
+//       applyProfileOnTabBtn.addEventListener("click", (e) => { e.preventDefault(); autofillOnActiveTab(); });
+//     }
+//     if (clearAllNavBtn) {
+//       clearAllNavBtn.addEventListener("click", (e) => { e.preventDefault(); window.clearAll(); });
+//     }
+//     if (toggleBtn) {
+//       toggleBtn.addEventListener("click", (e) => {
+//         e.preventDefault();
+//         chrome.storage.local.get(TOGGLE_KEY, (res) => {
+//           const enabled = !(res && res[TOGGLE_KEY] !== undefined ? res[TOGGLE_KEY] : true);
+//           setAutofillEnabled(enabled);
+//         });
+//       });
+//     }
+//   });
 
+//   // watch changes
+//   chrome.storage.onChanged.addListener((changes) => {
+//     if (changes[TOGGLE_KEY]) {
+//       updateToggleUI(changes[TOGGLE_KEY].newValue);
+//     }
+//     if (changes[STORAGE_KEY]) {
+//       loadProfileFromStorage();
+//     }
+//   });
+// })();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// popup.js (updated - toggle + injection + save/load + force autofill)
+// popup.js (updated v2 - with better error handling and status messages for hardfill)
 (() => {
   const STORAGE_KEY = "profile";
   const TOGGLE_KEY = "autofillEnabled";
@@ -3284,13 +3407,33 @@
 
   // input IDs used in popup.html
   const ids = [
-    "firstname","lastname","fullname","username","email","businessEmail",
-    "emailPassword","submissionPassword","phone","title","category","subcategory",
-    "address","city","state","postcode","country","location",
-    "facebook","linkedin","instagram","twitter","youtube","description"
+    "firstname",
+    "lastname",
+    "fullname",
+    "username",
+    "email",
+    "businessEmail",
+    "emailPassword",
+    "submissionPassword",
+    "phone",
+    "title",
+    "category",
+    "subcategory",
+    "address",
+    "city",
+    "state",
+    "postcode",
+    "country",
+    "location",
+    "facebook",
+    "linkedin",
+    "instagram",
+    "twitter",
+    "youtube",
+    "description",
   ];
   const inputs = {};
-  ids.forEach(id => inputs[id] = document.getElementById(id));
+  ids.forEach((id) => (inputs[id] = document.getElementById(id)));
 
   function setStatus(msg, short = false, success = null) {
     if (!statusDiv) return;
@@ -3299,18 +3442,25 @@
     else if (success === false) statusDiv.style.color = "var(--accent2)";
     else statusDiv.style.color = "var(--muted)";
     if (!short) {
-      setTimeout(() => { if (statusDiv) { statusDiv.textContent = ""; statusDiv.style.color = "var(--muted)"; } }, 2800);
+      setTimeout(() => {
+        if (statusDiv) {
+          statusDiv.textContent = "";
+          statusDiv.style.color = "var(--muted)";
+        }
+      }, 2800);
     }
   }
 
   function getActivePasswordChoice() {
-    const chosen = document.querySelector('input[name="activePassword"]:checked');
+    const chosen = document.querySelector(
+      'input[name="activePassword"]:checked'
+    );
     return chosen ? chosen.value : "emailPassword";
   }
 
   function gatherProfileFromUI() {
     const profile = {};
-    ids.forEach(id => {
+    ids.forEach((id) => {
       const el = inputs[id];
       if (!el) profile[id] = "";
       else profile[id] = (el.value || "").toString().trim();
@@ -3322,12 +3472,14 @@
 
   function loadProfileToUI(profile) {
     if (!profile) return;
-    ids.forEach(id => {
+    ids.forEach((id) => {
       const el = inputs[id];
       if (el) el.value = profile[id] || "";
     });
     if (profile.activePassword) {
-      const r = document.querySelector(`input[name="activePassword"][value="${profile.activePassword}"]`);
+      const r = document.querySelector(
+        `input[name="activePassword"][value="${profile.activePassword}"]`
+      );
       if (r) r.checked = true;
     }
   }
@@ -3347,7 +3499,8 @@
   function loadProfileFromStorage() {
     chrome.storage.local.get([STORAGE_KEY, TOGGLE_KEY], (res) => {
       if (res && res.profile) loadProfileToUI(res.profile);
-      const enabled = (res && res[TOGGLE_KEY] !== undefined) ? res[TOGGLE_KEY] : true;
+      const enabled =
+        res && res[TOGGLE_KEY] !== undefined ? res[TOGGLE_KEY] : true;
       updateToggleUI(enabled);
       setStatus("Profile loaded", true);
     });
@@ -3372,8 +3525,13 @@
       setStatus(enabled ? "Autofill: ON" : "Autofill: OFF", true, enabled);
       // notify open tabs (best-effort)
       chrome.tabs.query({}, (tabs) => {
-        tabs.forEach(t => {
-          try { chrome.tabs.sendMessage(t.id, { action: "toggleAutofill", enabled }); } catch (e) {}
+        tabs.forEach((t) => {
+          try {
+            chrome.tabs.sendMessage(t.id, {
+              action: "toggleAutofill",
+              enabled,
+            });
+          } catch (e) {}
         });
       });
     });
@@ -3382,18 +3540,26 @@
   // Clear stored profile and UI
   window.clearAll = function () {
     chrome.storage.local.remove([STORAGE_KEY], () => {
-      ids.forEach(id => { if (inputs[id]) inputs[id].value = ""; });
-      const r = document.querySelector('input[name="activePassword"][value="emailPassword"]');
+      ids.forEach((id) => {
+        if (inputs[id]) inputs[id].value = "";
+      });
+      const r = document.querySelector(
+        'input[name="activePassword"][value="emailPassword"]'
+      );
       if (r) r.checked = true;
       setStatus("Cleared profile and UI", false, true);
     });
   };
 
-  // Try to inject content scripts (MV3 preferred)
+  // Try to inject content scripts (MV3 preferred) with error handling
   function tryInjectContentScripts(tabId, callback) {
+    const files = ["content/autofill.js", "content/auth.js"]; // Adjust path if files are in root: ['autofill.js', 'auth.js']
     if (chrome.scripting && chrome.scripting.executeScript) {
       try {
-        chrome.scripting.executeScript({ target: { tabId }, files: ['content/autofill.js', 'content/auth.js'] }, () => {
+        chrome.scripting.executeScript({ target: { tabId }, files }, () => {
+          if (chrome.runtime.lastError) {
+            console.error("Injection error:", chrome.runtime.lastError.message);
+          }
           callback && callback();
         });
       } catch (e) {
@@ -3402,8 +3568,20 @@
       }
     } else if (chrome.tabs && chrome.tabs.executeScript) {
       try {
-        chrome.tabs.executeScript(tabId, { file: 'content/autofill.js' }, () => {
-          chrome.tabs.executeScript(tabId, { file: 'content/auth.js' }, () => {
+        chrome.tabs.executeScript(tabId, { file: files[0] }, () => {
+          if (chrome.runtime.lastError) {
+            console.error(
+              "Injection error for autofill.js:",
+              chrome.runtime.lastError.message
+            );
+          }
+          chrome.tabs.executeScript(tabId, { file: files[1] }, () => {
+            if (chrome.runtime.lastError) {
+              console.error(
+                "Injection error for auth.js:",
+                chrome.runtime.lastError.message
+              );
+            }
             callback && callback();
           });
         });
@@ -3412,41 +3590,95 @@
         callback && callback();
       }
     } else {
+      console.error("No injection method available");
       callback && callback();
     }
   }
 
-  // send message and retry injection once if no response
+  // send message and retry injection once if no response, with better error handling
   function sendAutofillMessageToTab(tabId, profile, force, cb) {
     let triedInject = false;
     function sendOnce() {
       // try auth first (for password/email focused sites) then general autofill
-      chrome.tabs.sendMessage(tabId, { action: "autofillAuth", profile, force }, (resp) => {
-        if (resp && resp.ok) {
-          return cb && cb(null, resp);
-        }
-        // fallback to broader autofill message
-        chrome.tabs.sendMessage(tabId, { action: "autofillProfile", profile, force }, (resp2) => {
-          if (resp2 && resp2.ok) return cb && cb(null, resp2);
-          // if nothing responded, try injecting once
-          if (!triedInject) {
-            triedInject = true;
-            tryInjectContentScripts(tabId, () => {
-              setTimeout(() => {
-                chrome.tabs.sendMessage(tabId, { action: "autofillAuth", profile, force }, (resp3) => {
-                  if (resp3 && resp3.ok) return cb && cb(null, resp3);
-                  chrome.tabs.sendMessage(tabId, { action: "autofillProfile", profile, force }, (resp4) => {
-                    if (resp4 && resp4.ok) return cb && cb(null, resp4);
-                    return cb && cb(new Error("Autofill failed or no response after injection"), resp4 || resp3 || resp2 || resp);
-                  });
-                });
-              }, 200);
-            });
-          } else {
-            cb && cb(new Error("Autofill failed or no response"), resp2 || resp);
+      chrome.tabs.sendMessage(
+        tabId,
+        { action: "autofillAuth", profile, force },
+        (resp) => {
+          if (chrome.runtime.lastError) {
+            console.warn(
+              "sendMessage error for autofillAuth:",
+              chrome.runtime.lastError.message
+            );
           }
-        });
-      });
+          if (resp && resp.ok) {
+            return cb && cb(null, resp);
+          }
+          // fallback to broader autofill message
+          chrome.tabs.sendMessage(
+            tabId,
+            { action: "autofillProfile", profile, force },
+            (resp2) => {
+              if (chrome.runtime.lastError) {
+                console.warn(
+                  "sendMessage error for autofillProfile:",
+                  chrome.runtime.lastError.message
+                );
+              }
+              if (resp2 && resp2.ok) return cb && cb(null, resp2);
+              // if nothing responded, try injecting once
+              if (!triedInject) {
+                triedInject = true;
+                console.log("No response, trying to inject content scripts...");
+                tryInjectContentScripts(tabId, () => {
+                  setTimeout(() => {
+                    chrome.tabs.sendMessage(
+                      tabId,
+                      { action: "autofillAuth", profile, force },
+                      (resp3) => {
+                        if (chrome.runtime.lastError) {
+                          console.warn(
+                            "Post-injection sendMessage error for autofillAuth:",
+                            chrome.runtime.lastError.message
+                          );
+                        }
+                        if (resp3 && resp3.ok) return cb && cb(null, resp3);
+                        chrome.tabs.sendMessage(
+                          tabId,
+                          { action: "autofillProfile", profile, force },
+                          (resp4) => {
+                            if (chrome.runtime.lastError) {
+                              console.warn(
+                                "Post-injection sendMessage error for autofillProfile:",
+                                chrome.runtime.lastError.message
+                              );
+                            }
+                            if (resp4 && resp4.ok) return cb && cb(null, resp4);
+                            return (
+                              cb &&
+                              cb(
+                                new Error(
+                                  "Autofill failed or no response after injection"
+                                ),
+                                resp4 || resp3 || resp2 || resp
+                              )
+                            );
+                          }
+                        );
+                      }
+                    );
+                  }, 500); // Increased timeout for injection to settle
+                });
+              } else {
+                cb &&
+                  cb(
+                    new Error("Autofill failed or no response"),
+                    resp2 || resp
+                  );
+              }
+            }
+          );
+        }
+      );
     }
     sendOnce();
   }
@@ -3458,24 +3690,43 @@
     chrome.storage.local.set({ profile }, () => {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (!tabs || !tabs[0]) {
-          setStatus("No active tab", false, false);
+          setStatus("No active tab found", false, false);
           return;
         }
         const tabId = tabs[0].id;
+        if (
+          tabs[0].url.startsWith("chrome://") ||
+          tabs[0].url.startsWith("edge://")
+        ) {
+          setStatus("Cannot autofill on chrome:// pages", false, false);
+          return;
+        }
         setStatus("Trying hard autofill on page...", true);
         tryInjectContentScripts(tabId, () => {
-          // inside sendAutofillMessageToTab → callback
-sendAutofillMessageToTab(tabId, profile, true, (err, resp) => {
-  if (resp && (resp.ok || (resp.filled && resp.filled > 0))) {
-    setStatus(`Autofill applied (${resp.filled || "?"})`, false, true);
-  } else if (err) {
-    console.warn("Autofill error:", err, resp);
-    setStatus("Autofill ran, but response missing. Check console.", false, true);
-  } else {
-    setStatus("Autofill: nothing filled.", false, false);
-  }
-});
-
+          sendAutofillMessageToTab(tabId, profile, true, (err, resp) => {
+            if (err) {
+              console.warn("Autofill error:", err, resp);
+              setStatus(
+                "Error: " + (err.message || "Unknown error - check console"),
+                false,
+                false
+              );
+            } else if (resp && resp.ok) {
+              setStatus(
+                `Autofill applied (${resp.filled || 0} fields)`,
+                false,
+                true
+              );
+            } else if (resp && resp.error) {
+              setStatus("Autofill error: " + resp.error, false, false);
+            } else {
+              setStatus(
+                "Autofill: nothing filled or no response",
+                false,
+                false
+              );
+            }
+          });
         });
       });
     });
@@ -3486,19 +3737,30 @@ sendAutofillMessageToTab(tabId, profile, true, (err, resp) => {
     loadProfileFromStorage();
 
     if (saveProfileBtn) {
-      saveProfileBtn.addEventListener("click", (e) => { e.preventDefault(); saveProfile(); });
+      saveProfileBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        saveProfile();
+      });
     }
     if (applyProfileOnTabBtn) {
-      applyProfileOnTabBtn.addEventListener("click", (e) => { e.preventDefault(); autofillOnActiveTab(); });
+      applyProfileOnTabBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        autofillOnActiveTab();
+      });
     }
     if (clearAllNavBtn) {
-      clearAllNavBtn.addEventListener("click", (e) => { e.preventDefault(); window.clearAll(); });
+      clearAllNavBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.clearAll();
+      });
     }
     if (toggleBtn) {
       toggleBtn.addEventListener("click", (e) => {
         e.preventDefault();
         chrome.storage.local.get(TOGGLE_KEY, (res) => {
-          const enabled = !(res && res[TOGGLE_KEY] !== undefined ? res[TOGGLE_KEY] : true);
+          const enabled = !(res && res[TOGGLE_KEY] !== undefined
+            ? res[TOGGLE_KEY]
+            : true);
           setAutofillEnabled(enabled);
         });
       });

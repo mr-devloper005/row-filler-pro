@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Hyper Fill",
   "description": "Automatically fills login / signup forms and supports content posting on multiple sites.",
-  "version": "4.0.0",
+  "version": "5.0.0",
 
   "permissions": [
     "storage",

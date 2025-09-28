@@ -210,8 +210,6 @@
 
 // })();
 
-
-
 // // content/autofill.js
 // // Updated to support firstname, lastname, fullname and businessEmail
 // (function () {
@@ -465,12 +463,6 @@
 //   });
 // })();
 
-
-
-
-
-
-
 // // content/autofill.js
 // (function () {
 //   if (window.__RowFiller_autofill_installed) return;
@@ -561,17 +553,6 @@
 //     if (res.profile) fill({ profile: res.profile });
 //   });
 // })();
-
-
-
-
-
-
-
-
-
-
-
 
 // // content/autofill.js
 // (function () {
@@ -804,12 +785,6 @@
 //     if (document.body) observer.observe(document.body, { childList: true, subtree: true });
 //   } catch (e) { /* ignore */ }
 // })();
-
-
-
-
-
-
 
 // // content/autofill.js (improved matching + autocomplete handling)
 // (function () {
@@ -1174,21 +1149,6 @@
 //     if (document.body) observer.observe(document.body, { childList: true, subtree: true });
 //   } catch (e) { /* ignore */ }
 // })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // // content/autofill.js (strict matching, no empty-field username fallback)
 // (function () {
@@ -1686,12 +1646,6 @@
 //   } catch (e) { /* ignore */ }
 // })();
 
-
-
-
-
-
-
 // // content/autofill.js (wide regex + strict rules)
 // (function () {
 //   if (window.__RowFiller_autofill_installed) return;
@@ -1874,7 +1828,6 @@
 //   }
 // });
 
-
 //   function fillWithProfile(profile) {
 //     if (!profile) return 0;
 //     const p = profile.profile || profile;
@@ -1973,34 +1926,6 @@
 //     if (document.body) obs.observe(document.body,{childList:true,subtree:true});
 //   } catch(e){}
 // })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // // content/autofill.js
 // // Wide regex + strict matching + force (hard-fill) mode
@@ -2348,8 +2273,6 @@
 //   //   }
 //   // });
 
-
-
 //   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 //   if (!msg) return;
 //   if (msg.action === "autofillProfile") {
@@ -2371,7 +2294,6 @@
 //   }
 // });
 
-
 //   // Auto-run (strict) after small delays to allow SPAs to render. Debounced on mutation.
 //   const runStrictDebounced = debounce(() => {
 //     chrome.storage.local.get(["autofillEnabled", "profile"], (res) => {
@@ -2390,10 +2312,6 @@
 //     if (document.body) obs.observe(document.body, { childList: true, subtree: true });
 //   } catch (e) { /* ignore */ }
 // })();
-
-
-
-
 
 // // content/autofill.js
 // (function () {
@@ -2638,63 +2556,6 @@
 //   } catch (e) {}
 // })();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // // content/autofill.js
 // (function () {
 //   if (window.__RowFiller_autofill_installed) return;
@@ -2926,35 +2787,6 @@
 //     if (document.body) obs.observe(document.body, { childList:true, subtree:true });
 //   }
 // })();
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // // content/autofill.js (v4) - label-first strict matching, username guarded, placeholder-only ignored
 // (function () {
@@ -3372,39 +3204,6 @@
 
 //   console.log("RowFiller v4 content script ready");
 // })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // // content/autofill.js (v4.1) - stricter username guarding & role-specific thresholds
 // (function () {
@@ -3848,24 +3647,1990 @@
 //   console.log("RowFiller v4.1 content script ready (strict username rules)");
 // })();
 
+// // content/autofill.js (v5.0) - Multi-Strategy Robust Detection System
+// (function () {
+//   if (window.__RowFiller_autofill_v5_installed) return;
+//   window.__RowFiller_autofill_v5_installed = true;
+//   console.log("🔑 content/autofill.js v5.0 loaded (Multi-Strategy Detection)");
 
+//   // ---------- Core Helpers ----------
+//   function debounce(fn, wait) {
+//     let t = null;
+//     return function () {
+//       clearTimeout(t);
+//       t = setTimeout(() => fn.apply(this, arguments), wait);
+//     };
+//   }
 
+//   function setNativeValue(el, value) {
+//     try {
+//       const proto = Object.getPrototypeOf(el);
+//       const desc = Object.getOwnPropertyDescriptor(proto, "value");
+//       if (desc && desc.set) desc.set.call(el, value);
+//       else el.value = value;
+//     } catch (e) {
+//       try {
+//         el.value = value;
+//       } catch (e2) {}
+//     }
+//     el.dispatchEvent(new Event("input", { bubbles: true }));
+//     el.dispatchEvent(new Event("change", { bubbles: true }));
+//     el.dispatchEvent(new Event("blur", { bubbles: true }));
+//   }
 
+//   function isVisible(el) {
+//     try {
+//       if (!el || el.disabled || el.hidden || el.readOnly) return false;
+//       const style = getComputedStyle(el);
+//       return (
+//         style.display !== "none" &&
+//         style.visibility !== "hidden" &&
+//         style.opacity !== "0"
+//       );
+//     } catch (e) {
+//       return !!(el.offsetParent || el.tagName === "select");
+//     }
+//   }
 
+//   // Enhanced validation helpers
+//   function looksLikeEmail(v) {
+//     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+//   }
+//   function looksLikeUrl(v) {
+//     return v && (/^https?:\/\//.test(v) || /\w+\.[a-z]{2,}/i.test(v));
+//   }
+//   function looksLikePhone(v) {
+//     return v && (v.match(/\d/g) || []).length >= 7;
+//   }
+//   function looksLikeUsername(v) {
+//     return (
+//       v && !v.includes("@") && !/\s/.test(v) && /^[A-Za-z0-9._\-]{2,}$/.test(v)
+//     );
+//   }
 
+//   // ---------- Advanced Context Extraction ----------
+//   function getAllContextData(el) {
+//     const data = {
+//       element: el,
+//       tag: el.tagName?.toLowerCase() || "",
+//       type: el.type?.toLowerCase() || "",
+//       name: el.name || "",
+//       id: el.id || "",
+//       className: el.className || "",
+//       placeholder: el.placeholder || "",
+//       title: el.title || "",
+//       ariaLabel: el.getAttribute?.("aria-label") || "",
+//       ariaLabelledBy: el.getAttribute?.("aria-labelledby") || "",
+//       autocomplete: el.getAttribute?.("autocomplete") || "",
+//       dataTestId: el.getAttribute?.("data-testid") || "",
+//       dataField: el.getAttribute?.("data-field") || "",
+//       dataType: el.getAttribute?.("data-type") || "",
+//       label: "",
+//       siblingText: "",
+//       parentText: "",
+//       nearbyText: "",
+//     };
 
+//     // Extract label relationships
+//     try {
+//       if (data.id) {
+//         const label = document.querySelector(
+//           `label[for="${CSS.escape(data.id)}"]`
+//         );
+//         if (label) data.label = label.innerText?.trim() || "";
+//       }
 
+//       // Check parent labels
+//       let parent = el.parentElement;
+//       for (let i = 0; i < 5 && parent; i++, parent = parent.parentElement) {
+//         if (parent.tagName === "LABEL") {
+//           data.label = data.label || parent.innerText?.trim() || "";
+//           break;
+//         }
+//       }
 
-// content/autofill.js (v5.0) - Multi-Strategy Robust Detection System
+//       // Sibling text (previous/next elements)
+//       const prevSibling = el.previousElementSibling;
+//       if (
+//         prevSibling &&
+//         ["LABEL", "SPAN", "DIV", "P"].includes(prevSibling.tagName)
+//       ) {
+//         data.siblingText = prevSibling.innerText?.trim() || "";
+//       }
+
+//       // Parent container text
+//       if (el.parentElement) {
+//         const parentTextNodes = Array.from(el.parentElement.childNodes)
+//           .filter((n) => n.nodeType === Node.TEXT_NODE)
+//           .map((n) => n.textContent?.trim())
+//           .filter(Boolean)
+//           .join(" ");
+//         data.parentText = parentTextNodes;
+//       }
+
+//       // Nearby text (within reasonable distance)
+//       try {
+//         const rect = el.getBoundingClientRect();
+//         const nearby = Array.from(
+//           document.querySelectorAll("label, span, div, p")
+//         )
+//           .filter((e) => {
+//             const eRect = e.getBoundingClientRect();
+//             return (
+//               Math.abs(eRect.top - rect.top) < 50 &&
+//               Math.abs(eRect.left - rect.left) < 200
+//             );
+//           })
+//           .map((e) => e.innerText?.trim())
+//           .filter(Boolean)
+//           .join(" ");
+//         data.nearbyText = nearby;
+//       } catch (e) {}
+
+//       // aria-labelledby reference
+//       if (data.ariaLabelledBy) {
+//         const ref = document.getElementById(data.ariaLabelledBy);
+//         if (ref) data.label = data.label || ref.innerText?.trim() || "";
+//       }
+//     } catch (e) {
+//       console.warn("Context extraction error:", e);
+//     }
+
+//     return data;
+//   }
+
+//   // ---------- Multi-Strategy Field Detection ----------
+//   const FIELD_PATTERNS = {
+//     email: {
+//       html_type: ["email"],
+//       positive_patterns: [
+//         /\bemail\b/i,
+//         /\be-?mail\b/i,
+//         /\bmail\b/i,
+//         /\bemail[_\s-]?address\b/i,
+//         /\buser[_\s-]?email\b/i,
+//         /\baccount[_\s-]?email\b/i,
+//         /\bemail[_\s-]?field\b/i,
+//       ],
+//       negative_patterns: [
+//         /\b(business|work|company|office)\b/i,
+//         /confirm/i,
+//         /verify/i,
+//       ],
+//       css_classes: [
+//         "email",
+//         "e-mail",
+//         "user-email",
+//         "account-email",
+//         "login-email",
+//         "input-email",
+//         "field-email",
+//         "form-email",
+//       ],
+//       data_attributes: ["email", "user-email", "account-email"],
+//       autocomplete: ["email", "username"],
+//       score_threshold: 5,
+//     },
+
+//     username: {
+//       html_type: ["text"],
+//       positive_patterns: [
+//         /^username$/i,
+//         /^user[_\s-]?name$/i,
+//         /\buser[_\s-]?id\b/i,
+//         /\buserid\b/i,
+//         /\blogin\b/i,
+//         /\bhandle\b/i,
+//         /\baccount[_\s-]?name\b/i,
+//         /\buser\b/i,
+//       ],
+//       negative_patterns: [
+//         /email/i,
+//         /password/i,
+//         /facebook/i,
+//         /twitter/i,
+//         /linkedin/i,
+//         /instagram/i,
+//         /youtube/i,
+//         /website/i,
+//         /url/i,
+//         /phone/i,
+//         /first/i,
+//         /last/i,
+//         /full/i,
+//         /business/i,
+//         /company/i,
+//         /organization/i,
+//         /location/i,
+//         /address/i,
+//       ],
+//       css_classes: [
+//         "username",
+//         "user-name",
+//         "user_name",
+//         "login",
+//         "handle",
+//         "account-name",
+//         "user-id",
+//         "userid",
+//         "login-field",
+//         "user-field",
+//       ],
+//       data_attributes: ["username", "user-name", "login", "handle"],
+//       autocomplete: ["username"],
+//       score_threshold: 8,
+//     },
+
+//     password: {
+//       html_type: ["password"],
+//       positive_patterns: [/\bpassword\b/i, /\bpass\b/i, /\bpwd\b/i],
+//       negative_patterns: [
+//         /confirm/i,
+//         /verify/i,
+//         /retype/i,
+//         /repeat/i,
+//         /new/i,
+//         /current/i,
+//         /old/i,
+//       ],
+//       css_classes: ["password", "pass", "pwd", "login-password"],
+//       data_attributes: ["password", "pass"],
+//       autocomplete: ["current-password", "new-password"],
+//       score_threshold: 5,
+//     },
+
+//     firstname: {
+//       html_type: ["text"],
+//       positive_patterns: [
+//         /\bfirst[_\s-]?name\b/i,
+//         /\bgiven[_\s-]?name\b/i,
+//         /\bfname\b/i,
+//         /\bfirst\b/i,
+//       ],
+//       negative_patterns: [],
+//       css_classes: ["firstname", "first-name", "fname", "given-name"],
+//       data_attributes: ["firstname", "first-name"],
+//       autocomplete: ["given-name"],
+//       score_threshold: 5,
+//     },
+
+//     lastname: {
+//       html_type: ["text"],
+//       positive_patterns: [
+//         /\blast[_\s-]?name\b/i,
+//         /\bsurname\b/i,
+//         /\bfamily[_\s-]?name\b/i,
+//         /\blname\b/i,
+//       ],
+//       negative_patterns: [],
+//       css_classes: ["lastname", "last-name", "lname", "surname", "family-name"],
+//       data_attributes: ["lastname", "last-name"],
+//       autocomplete: ["family-name"],
+//       score_threshold: 5,
+//     },
+
+//     fullname: {
+//       html_type: ["text"],
+//       positive_patterns: [
+//         /\bfull[_\s-]?name\b/i,
+//         /\bdisplay[_\s-]?name\b/i,
+//         /^name$/i,
+//         /\breal[_\s-]?name\b/i,
+//       ],
+//       negative_patterns: [/first/i, /last/i, /user/i, /company/i],
+//       css_classes: ["fullname", "full-name", "display-name", "real-name"],
+//       data_attributes: ["fullname", "full-name"],
+//       autocomplete: ["name"],
+//       score_threshold: 5,
+//     },
+
+//     phone: {
+//       html_type: ["tel", "text"],
+//       positive_patterns: [
+//         /\bphone\b/i,
+//         /\bmobile\b/i,
+//         /\btel\b/i,
+//         /\bcontact\b/i,
+//         /\bnumber\b/i,
+//       ],
+//       negative_patterns: [/fax/i, /office/i],
+//       css_classes: ["phone", "mobile", "tel", "contact-number"],
+//       data_attributes: ["phone", "mobile", "tel"],
+//       autocomplete: ["tel"],
+//       score_threshold: 4,
+//     },
+
+//     website: {
+//       html_type: ["url", "text"],
+//       positive_patterns: [
+//         /\bwebsite\b/i,
+//         /\bhomepage\b/i,
+//         /\bsite\b/i,
+//         /\bweb[_\s-]?url\b/i,
+//         /\burl\b/i,
+//       ],
+//       negative_patterns: [/email/i, /social/i],
+//       css_classes: ["website", "homepage", "url", "web-url"],
+//       data_attributes: ["website", "url"],
+//       autocomplete: ["url"],
+//       score_threshold: 5,
+//     },
+//   };
+
+//   // Calculate field detection score
+//   function calculateFieldScore(context, fieldType) {
+//     const config = FIELD_PATTERNS[fieldType];
+//     if (!config) return 0;
+
+//     let score = 0;
+//     const searchText = [
+//       context.label,
+//       context.name,
+//       context.id,
+//       context.placeholder,
+//       context.ariaLabel,
+//       context.title,
+//       context.siblingText,
+//       context.parentText,
+//       context.className,
+//       context.dataTestId,
+//       context.dataField,
+//       context.dataType,
+//     ]
+//       .join(" ")
+//       .toLowerCase();
+
+//     // HTML type match (highest priority)
+//     if (config.html_type && config.html_type.includes(context.type)) {
+//       score += 15;
+//     }
+
+//     // Autocomplete attribute match
+//     if (
+//       config.autocomplete &&
+//       config.autocomplete.some((ac) => context.autocomplete.includes(ac))
+//     ) {
+//       score += 12;
+//     }
+
+//     // Positive pattern matching
+//     config.positive_patterns?.forEach((pattern) => {
+//       if (pattern.test(context.label)) score += 10;
+//       if (pattern.test(context.name)) score += 8;
+//       if (pattern.test(context.id)) score += 8;
+//       if (pattern.test(context.placeholder)) score += 6;
+//       if (pattern.test(context.ariaLabel)) score += 6;
+//       if (pattern.test(context.dataTestId)) score += 5;
+//       if (pattern.test(context.className)) score += 4;
+//       if (pattern.test(context.siblingText)) score += 3;
+//       if (pattern.test(context.parentText)) score += 2;
+//     });
+
+//     // CSS class matching
+//     config.css_classes?.forEach((cls) => {
+//       if (context.className.toLowerCase().includes(cls)) score += 6;
+//     });
+
+//     // Data attribute matching
+//     config.data_attributes?.forEach((attr) => {
+//       if (
+//         context.dataField.toLowerCase().includes(attr) ||
+//         context.dataType.toLowerCase().includes(attr)
+//       )
+//         score += 7;
+//     });
+
+//     // Negative pattern penalties
+//     config.negative_patterns?.forEach((pattern) => {
+//       if (pattern.test(searchText)) score -= 10;
+//     });
+
+//     return score;
+//   }
+
+//   // Detect field type using multi-strategy approach
+//   function detectFieldType(element, isForce = false) {
+//     if (!isVisible(element)) return null;
+
+//     const context = getAllContextData(element);
+
+//     // Skip non-input elements
+//     if (
+//       [
+//         "hidden",
+//         "submit",
+//         "button",
+//         "reset",
+//         "image",
+//         "file",
+//         "checkbox",
+//         "radio",
+//       ].includes(context.type)
+//     ) {
+//       return null;
+//     }
+
+//     let bestType = null;
+//     let bestScore = -1;
+
+//     // Test each field type
+//     for (const [fieldType, config] of Object.entries(FIELD_PATTERNS)) {
+//       const score = calculateFieldScore(context, fieldType);
+//       const threshold = isForce
+//         ? Math.max(3, config.score_threshold - 2)
+//         : config.score_threshold;
+
+//       if (score >= threshold && score > bestScore) {
+//         bestScore = score;
+//         bestType = fieldType;
+//       }
+//     }
+
+//     // Special handling for textarea
+//     if (context.tag === "textarea") {
+//       const descScore = calculateFieldScore(context, "description");
+//       if (descScore >= 3) return "description";
+//     }
+
+//     // Fallback logic
+//     if (!bestType) {
+//       const labelText = context.label.toLowerCase();
+//       if (
+//         labelText.includes("name") &&
+//         !labelText.includes("user") &&
+//         !labelText.includes("first") &&
+//         !labelText.includes("last")
+//       ) {
+//         return "fullname";
+//       }
+//     }
+
+//     console.log(
+//       `Field detection: ${element.tagName}[${
+//         element.name || element.id || "unnamed"
+//       }] -> ${bestType} (score: ${bestScore})`
+//     );
+//     return bestType;
+//   }
+
+//   // ---------- Fill Logic ----------
+//   function alreadyFilled(el) {
+//     try {
+//       if (el.dataset?.rowfiller === "filled") return true;
+//       if (el.getAttribute?.("contenteditable") === "true") {
+//         return !!el.innerText?.trim();
+//       }
+//       return !!el.value?.trim();
+//     } catch (e) {
+//       return false;
+//     }
+//   }
+
+//   function shouldSkipFill(element, fieldType, value, isForce) {
+//     // Skip if already filled and not in force mode
+//     if (!isForce && alreadyFilled(element)) return true;
+
+//     // In force mode, check if current value seems appropriate
+//     if (isForce && alreadyFilled(element)) {
+//       const currentValue = element.value?.trim() || "";
+
+//       // Type-specific validation
+//       switch (fieldType) {
+//         case "email":
+//           return looksLikeEmail(currentValue) && looksLikeEmail(value);
+//         case "username":
+//           return looksLikeUsername(currentValue) && looksLikeUsername(value);
+//         case "website":
+//           return looksLikeUrl(currentValue) && looksLikeUrl(value);
+//         case "phone":
+//           return looksLikePhone(currentValue) && looksLikePhone(value);
+//         default:
+//           return currentValue.length > 2; // Has substantial content
+//       }
+//     }
+
+//     return false;
+//   }
+
+//   function fillElement(element, fieldType, value, isForce = false) {
+//     try {
+//       if (shouldSkipFill(element, fieldType, value, isForce)) return false;
+//       if (!value) return false;
+
+//       const context = getAllContextData(element);
+
+//       // Type-specific validation
+//       switch (fieldType) {
+//         case "email":
+//           if (!looksLikeEmail(value)) return false;
+//           if (context.tag === "textarea" || context.type === "url")
+//             return false;
+//           break;
+//         case "username":
+//           if (!looksLikeUsername(value)) return false;
+//           if (["email", "tel", "url"].includes(context.type)) return false;
+//           break;
+//         case "website":
+//           if (!looksLikeUrl(value)) return false;
+//           break;
+//         case "phone":
+//           if (!looksLikePhone(value)) return false;
+//           break;
+//       }
+
+//       // Handle select elements
+//       if (context.tag === "select") {
+//         const option = Array.from(element.options).find(
+//           (opt) =>
+//             opt.value?.toLowerCase() === value.toLowerCase() ||
+//             opt.text?.toLowerCase() === value.toLowerCase()
+//         );
+//         if (option) {
+//           element.value = option.value;
+//           element.dispatchEvent(new Event("change", { bubbles: true }));
+//           element.dataset.rowfiller = "filled";
+//           return true;
+//         }
+//         return false;
+//       }
+
+//       // Handle contenteditable
+//       if (element.getAttribute?.("contenteditable") === "true") {
+//         try {
+//           if (document.execCommand) {
+//             document.execCommand("insertText", false, value);
+//           } else {
+//             element.innerText = value;
+//           }
+//         } catch (e) {
+//           element.innerText = value;
+//         }
+//         element.dataset.rowfiller = "filled";
+//         return true;
+//       }
+
+//       // Fill regular input/textarea
+//       setNativeValue(element, value);
+//       element.dataset.rowfiller = "filled";
+
+//       console.log(`✅ Filled ${fieldType}: ${value}`);
+//       return true;
+//     } catch (error) {
+//       console.warn("Fill error:", error);
+//       return false;
+//     }
+//   }
+
+//   // ---------- Profile Data Processing ----------
+//   function prepareProfileData(profile) {
+//     const p = profile.profile || profile || {};
+//     const first = p.firstname || p.firstName || "";
+//     const last = p.lastname || p.lastName || "";
+//     const fullname =
+//       p.fullname || [first, last].filter(Boolean).join(" ").trim() || "";
+//     const password =
+//       p.activePassword === "submissionPassword"
+//         ? p.submissionPassword || ""
+//         : p.emailPassword || "";
+
+//     return {
+//       firstname: first,
+//       lastname: last,
+//       fullname: fullname,
+//       username: p.username || "",
+//       email: p.email || p.submissionEmail || "",
+//       businessEmail: p.businessEmail || "",
+//       password: password,
+//       phone: p.phone || "",
+//       website: p.website || "",
+//       facebook: p.facebook || "",
+//       linkedin: p.linkedin || "",
+//       instagram: p.instagram || "",
+//       twitter: p.twitter || "",
+//       youtube: p.youtube || "",
+//       description: p.description || p.bio || "",
+//       address: p.address || "",
+//       city: p.city || "",
+//       state: p.state || "",
+//       postcode: p.postcode || "",
+//       country: p.country || "",
+//       location: p.location || "",
+//       title: p.title || "",
+//       category: p.category || "",
+//       subcategory: p.subcategory || "",
+//     };
+//   }
+
+//   // ---------- Main Fill Function ----------
+//   function performFill(profile, isForce = false) {
+//     if (!profile) return 0;
+
+//     const profileData = prepareProfileData(profile);
+//     const elements = Array.from(
+//       document.querySelectorAll(
+//         'input, textarea, select, [contenteditable="true"]'
+//       )
+//     );
+
+//     // Sort by position (top to bottom, left to right)
+//     elements.sort((a, b) => {
+//       try {
+//         const rectA = a.getBoundingClientRect();
+//         const rectB = b.getBoundingClientRect();
+//         return rectA.top - rectB.top || rectA.left - rectB.left;
+//       } catch (e) {
+//         return 0;
+//       }
+//     });
+
+//     let fillCount = 0;
+//     const filledTypes = new Set();
+//     const processedElements = new Set();
+
+//     console.log(
+//       `Starting fill process (force: ${isForce}) with ${elements.length} elements`
+//     );
+
+//     for (const element of elements) {
+//       try {
+//         if (processedElements.has(element)) continue;
+//         if (!isVisible(element)) continue;
+
+//         const fieldType = detectFieldType(element, isForce);
+//         if (!fieldType) continue;
+
+//         // In normal mode, avoid duplicate field types (except social media)
+//         const allowDuplicates = [
+//           "facebook",
+//           "linkedin",
+//           "instagram",
+//           "twitter",
+//           "youtube",
+//           "description",
+//         ];
+//         if (
+//           !isForce &&
+//           filledTypes.has(fieldType) &&
+//           !allowDuplicates.includes(fieldType)
+//         ) {
+//           continue;
+//         }
+
+//         const value = profileData[fieldType];
+//         if (!value) continue;
+
+//         const success = fillElement(element, fieldType, value, isForce);
+//         if (success) {
+//           fillCount++;
+//           filledTypes.add(fieldType);
+//           processedElements.add(element);
+//         }
+//       } catch (error) {
+//         console.warn("Element processing error:", error);
+//       }
+//     }
+
+//     console.log(
+//       `✅ Fill completed: ${fillCount} fields filled (force: ${isForce})`
+//     );
+//     return fillCount;
+//   }
+
+//   // ---------- Message Handling ----------
+//   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//     if (!message) {
+//       sendResponse({ ok: false, error: "no_message" });
+//       return true;
+//     }
+
+//     if (
+//       ["autofillProfile", "autofillAuth", "autofill"].includes(message.action)
+//     ) {
+//       chrome.storage.local.get(["autofillEnabled", "profile"], (result) => {
+//         const enabled = result?.autofillEnabled !== false;
+//         if (!enabled) {
+//           sendResponse({ ok: false, filled: 0, error: "disabled" });
+//           return;
+//         }
+
+//         const profile = message.profile || result?.profile;
+//         if (!profile) {
+//           sendResponse({ ok: false, filled: 0, error: "no_profile" });
+//           return;
+//         }
+
+//         try {
+//           const filled = performFill(profile, !!message.force);
+//           sendResponse({
+//             ok: filled > 0,
+//             filled: filled,
+//             force: !!message.force,
+//           });
+//         } catch (error) {
+//           console.error("Autofill error:", error);
+//           sendResponse({ ok: false, filled: 0, error: error.message });
+//         }
+//       });
+//       return true;
+//     }
+
+//     if (message.action === "toggleAutofill") {
+//       sendResponse({ ok: true, enabled: !!message.enabled });
+//       return;
+//     }
+
+//     sendResponse({ ok: false, error: "unknown_action" });
+//     return;
+//   });
+
+//   // ---------- Auto-run Logic ----------
+//   const autoFill = debounce(() => {
+//     chrome.storage.local.get(["autofillEnabled", "profile"], (result) => {
+//       const enabled = result?.autofillEnabled !== false;
+//       const profile = result?.profile;
+//       if (enabled && profile) {
+//         try {
+//           performFill(profile, false);
+//         } catch (error) {
+//           console.warn("Auto-fill error:", error);
+//         }
+//       }
+//     });
+//   }, 800);
+
+//   // Initial runs
+//   setTimeout(autoFill, 1000);
+//   setTimeout(autoFill, 2500);
+
+//   // Observe DOM changes
+//   if (typeof MutationObserver !== "undefined") {
+//     const observer = new MutationObserver(
+//       debounce(() => {
+//         chrome.storage.local.get(["autofillEnabled", "profile"], (result) => {
+//           if (result?.autofillEnabled !== false && result?.profile) {
+//             try {
+//               performFill(result.profile, false);
+//             } catch (error) {
+//               console.warn("Observer fill error:", error);
+//             }
+//           }
+//         });
+//       }, 1000)
+//     );
+
+//     try {
+//       if (document.body) {
+//         observer.observe(document.body, { childList: true, subtree: true });
+//       }
+//     } catch (error) {
+//       console.warn("Observer setup error:", error);
+//     }
+//   }
+
+//   console.log("RowFiller v5.0 Multi-Strategy System Ready");
+// })();
+
+// // content/autofill.js (v6.4) - Enhanced Field Detection with Address Support and More Negatives for Names
+// (function () {
+//   if (window.__RowFiller_autofill_v6_installed) return;
+//   window.__RowFiller_autofill_v6_installed = true;
+//   console.log(
+//     "🔑 content/autofill.js v6.4 loaded (Enhanced Detection with Address and Negatives)"
+//   );
+
+//   // ---------- Core Helpers ----------
+//   function debounce(fn, wait) {
+//     let t = null;
+//     return function () {
+//       clearTimeout(t);
+//       t = setTimeout(() => fn.apply(this, arguments), wait);
+//     };
+//   }
+
+//   function setNativeValue(el, value) {
+//     try {
+//       const proto = Object.getPrototypeOf(el);
+//       const desc = Object.getOwnPropertyDescriptor(proto, "value");
+//       if (desc && desc.set) desc.set.call(el, value);
+//       else el.value = value;
+//     } catch (e) {
+//       try {
+//         el.value = value;
+//       } catch (e2) {}
+//     }
+//     el.dispatchEvent(new Event("input", { bubbles: true }));
+//     el.dispatchEvent(new Event("change", { bubbles: true }));
+//     el.dispatchEvent(new Event("blur", { bubbles: true }));
+//   }
+
+//   function isVisible(el) {
+//     try {
+//       if (!el || el.disabled || el.hidden || el.readOnly) return false;
+//       const style = getComputedStyle(el);
+//       return (
+//         style.display !== "none" &&
+//         style.visibility !== "hidden" &&
+//         style.opacity !== "0"
+//       );
+//     } catch (e) {
+//       return !!(el.offsetParent || el.tagName === "select");
+//     }
+//   }
+
+//   // Enhanced validation helpers with relaxed email
+//   function looksLikeEmail(v) {
+//     return /^[^\s@]+@[^\s@]+$/.test(v);
+//   } // Relaxed: no required dot after domain
+//   function looksLikeUrl(v) {
+//     return v && (/^https?:\/\//.test(v) || /\w+\.[a-z]{2,}/i.test(v));
+//   }
+//   function looksLikePhone(v) {
+//     return v && (v.match(/\d/g) || []).length >= 7;
+//   }
+//   function looksLikeUsername(v) {
+//     return (
+//       v && !v.includes("@") && !/\s/.test(v) && /^[A-Za-z0-9._\-]{2,}$/.test(v)
+//     );
+//   }
+//   function looksLikeSocialHandle(v) {
+//     return v && (/^@/.test(v) || v.includes("/"));
+//   } // Loose check for handles like @user or facebook.com/user
+
+//   // ---------- Advanced Context Extraction ----------
+//   function getAllContextData(el) {
+//     const data = {
+//       element: el,
+//       tag: el.tagName?.toLowerCase() || "",
+//       type: el.type?.toLowerCase() || "",
+//       name: el.name || "",
+//       id: el.id || "",
+//       className: el.className || "",
+//       placeholder: el.placeholder || "",
+//       title: el.title || "",
+//       ariaLabel: el.getAttribute?.("aria-label") || "",
+//       ariaLabelledBy: el.getAttribute?.("aria-labelledby") || "",
+//       autocomplete: el.getAttribute?.("autocomplete") || "",
+//       dataTestId: el.getAttribute?.("data-testid") || "",
+//       dataField: el.getAttribute?.("data-field") || "",
+//       dataType: el.getAttribute?.("data-type") || "",
+//       label: "",
+//       siblingText: "",
+//       parentText: "",
+//       nearbyText: "",
+//     };
+
+//     // Extract label relationships
+//     try {
+//       if (data.id) {
+//         const label = document.querySelector(
+//           `label[for="${CSS.escape(data.id)}"]`
+//         );
+//         if (label) data.label = label.innerText?.trim() || "";
+//       }
+
+//       // Check parent labels
+//       let parent = el.parentElement;
+//       for (let i = 0; i < 5 && parent; i++, parent = parent.parentElement) {
+//         if (parent.tagName === "LABEL") {
+//           data.label = data.label || parent.innerText?.trim() || "";
+//           break;
+//         }
+//       }
+
+//       // Sibling text (previous/next elements)
+//       const prevSibling = el.previousElementSibling;
+//       if (
+//         prevSibling &&
+//         ["LABEL", "SPAN", "DIV", "P"].includes(prevSibling.tagName)
+//       ) {
+//         data.siblingText = prevSibling.innerText?.trim() || "";
+//       }
+
+//       // Parent container text
+//       if (el.parentElement) {
+//         const parentTextNodes = Array.from(el.parentElement.childNodes)
+//           .filter((n) => n.nodeType === Node.TEXT_NODE)
+//           .map((n) => n.textContent?.trim())
+//           .filter(Boolean)
+//           .join(" ");
+//         data.parentText = parentTextNodes;
+//       }
+
+//       // Nearby text (within reasonable distance)
+//       try {
+//         const rect = el.getBoundingClientRect();
+//         const nearby = Array.from(
+//           document.querySelectorAll("label, span, div, p")
+//         )
+//           .filter((e) => {
+//             const eRect = e.getBoundingClientRect();
+//             return (
+//               Math.abs(eRect.top - rect.top) < 50 &&
+//               Math.abs(eRect.left - rect.left) < 200 &&
+//               e !== el
+//             );
+//           })
+//           .map((e) => e.innerText?.trim())
+//           .filter(Boolean)
+//           .join(" ");
+//         data.nearbyText = nearby;
+//       } catch (e) {}
+
+//       // aria-labelledby reference
+//       if (data.ariaLabelledBy) {
+//         const ref = document.getElementById(data.ariaLabelledBy);
+//         if (ref) data.label = data.label || ref.innerText?.trim() || "";
+//       }
+//     } catch (e) {
+//       console.warn("Context extraction error:", e);
+//     }
+
+//     return data;
+//   }
+
+//   // ---------- Multi-Strategy Field Detection ----------
+//   const FIELD_PATTERNS = {
+//     email: {
+//       html_type: ["email"],
+//       positive_patterns: [
+//         /\bemail\b/i,
+//         /\be-?mail\b/i,
+//         /\bmail\b/i,
+//         /\bemail[_\s-]?address\b/i,
+//         /\buser[_\s-]?email\b/i,
+//         /\baccount[_\s-]?email\b/i,
+//         /\bemail[_\s-]?field\b/i,
+//       ],
+//       negative_patterns: [
+//         /\b(business|work|company|office)\b/i,
+//         /confirm/i,
+//         /verify/i,
+//         /social/i,
+//         /facebook/i,
+//         /twitter/i,
+//       ],
+//       css_classes: [
+//         "email",
+//         "e-mail",
+//         "user-email",
+//         "account-email",
+//         "login-email",
+//         "input-email",
+//         "field-email",
+//         "form-email",
+//       ],
+//       data_attributes: ["email", "user-email", "account-email"],
+//       autocomplete: ["email", "username"],
+//       score_threshold: 6,
+//       force_threshold: 10,
+//     },
+
+//     username: {
+//       html_type: ["text"],
+//       positive_patterns: [
+//         /^username$/i,
+//         /^user[_\s-]?name$/i,
+//         /\buser[_\s-]?id\b/i,
+//         /\buserid\b/i,
+//         /\blogin\b/i,
+//         /\bhandle\b/i,
+//         /\baccount[_\s-]?name\b/i,
+//         /\buser\b/i,
+//       ],
+//       negative_patterns: [
+//         /email/i,
+//         /password/i,
+//         /facebook/i,
+//         /twitter/i,
+//         /linkedin/i,
+//         /instagram/i,
+//         /youtube/i,
+//         /website/i,
+//         /url/i,
+//         /phone/i,
+//         /first/i,
+//         /last/i,
+//         /full/i,
+//         /business/i,
+//         /company/i,
+//         /organization/i,
+//         /location/i,
+//         /address/i,
+//         /social/i,
+//         /profile/i,
+//         /link/i,
+//         /discord/i,
+//         /bluesky/i,
+//         /mastodon/i,
+//         /github/i,
+//         /orcid/i,
+//         /google/i,
+//       ],
+//       css_classes: [
+//         "username",
+//         "user-name",
+//         "user_name",
+//         "login",
+//         "handle",
+//         "account-name",
+//         "user-id",
+//         "userid",
+//         "login-field",
+//         "user-field",
+//       ],
+//       data_attributes: ["username", "user-name", "login", "handle"],
+//       autocomplete: ["username"],
+//       score_threshold: 10,
+//       force_threshold: 15,
+//       min_signals: 2,
+//       force_min_signals: 3,
+//     },
+
+//     password: {
+//       html_type: ["password"],
+//       positive_patterns: [/\bpassword\b/i, /\bpass\b/i, /\bpwd\b/i],
+//       negative_patterns: [
+//         /confirm/i,
+//         /verify/i,
+//         /retype/i,
+//         /repeat/i,
+//         /new/i,
+//         /current/i,
+//         /old/i,
+//       ],
+//       css_classes: ["password", "pass", "pwd", "login-password"],
+//       data_attributes: ["password", "pass"],
+//       autocomplete: ["current-password", "new-password"],
+//       score_threshold: 6,
+//       force_threshold: 8,
+//     },
+
+//     firstname: {
+//       html_type: ["text"],
+//       positive_patterns: [
+//         /\bfirst[_\s-]?name\b/i,
+//         /\bgiven[_\s-]?name\b/i,
+//         /\bfname\b/i,
+//         /\bfirst\b/i,
+//       ],
+//       negative_patterns: [
+//         /social/i,
+//         /id/i,
+//         /handle/i,
+//         /profile/i,
+//         /discord/i,
+//         /bluesky/i,
+//         /mastodon/i,
+//         /github/i,
+//         /orcid/i,
+//         /google/i,
+//         /x/i,
+//         /twitter/i,
+//         /linkedin/i,
+//         /facebook/i,
+//         /instagram/i,
+//         /youtube/i,
+//       ],
+//       css_classes: ["firstname", "first-name", "fname", "given-name"],
+//       data_attributes: ["firstname", "first-name"],
+//       autocomplete: ["given-name"],
+//       score_threshold: 6,
+//       force_threshold: 8,
+//     },
+
+//     lastname: {
+//       html_type: ["text"],
+//       positive_patterns: [
+//         /\blast[_\s-]?name\b/i,
+//         /\bsurname\b/i,
+//         /\bfamily[_\s-]?name\b/i,
+//         /\blname\b/i,
+//       ],
+//       negative_patterns: [
+//         /social/i,
+//         /id/i,
+//         /handle/i,
+//         /profile/i,
+//         /discord/i,
+//         /bluesky/i,
+//         /mastodon/i,
+//         /github/i,
+//         /orcid/i,
+//         /google/i,
+//         /x/i,
+//         /twitter/i,
+//         /linkedin/i,
+//         /facebook/i,
+//         /instagram/i,
+//         /youtube/i,
+//       ],
+//       css_classes: ["lastname", "last-name", "lname", "surname", "family-name"],
+//       data_attributes: ["lastname", "last-name"],
+//       autocomplete: ["family-name"],
+//       score_threshold: 6,
+//       force_threshold: 8,
+//     },
+
+//     fullname: {
+//       html_type: ["text"],
+//       positive_patterns: [
+//         /\bfull[_\s-]?name\b/i,
+//         /\bdisplay[_\s-]?name\b/i,
+//         /^name$/i,
+//         /\breal[_\s-]?name\b/i,
+//       ],
+//       negative_patterns: [
+//         /first/i,
+//         /last/i,
+//         /user/i,
+//         /company/i,
+//         /social/i,
+//         /id/i,
+//         /handle/i,
+//         /profile/i,
+//         /discord/i,
+//         /bluesky/i,
+//         /mastodon/i,
+//         /github/i,
+//         /orcid/i,
+//         /google/i,
+//         /x/i,
+//         /twitter/i,
+//         /linkedin/i,
+//         /facebook/i,
+//         /instagram/i,
+//         /youtube/i,
+//       ],
+//       css_classes: ["fullname", "full-name", "display-name", "real-name"],
+//       data_attributes: ["fullname", "full-name"],
+//       autocomplete: ["name"],
+//       score_threshold: 6,
+//       force_threshold: 8,
+//     },
+
+//     phone: {
+//       html_type: ["tel", "text"],
+//       positive_patterns: [
+//         /\bphone\b/i,
+//         /\bmobile\b/i,
+//         /\btel\b/i,
+//         /\bcontact\b/i,
+//         /\bnumber\b/i,
+//       ],
+//       negative_patterns: [/fax/i, /office/i, /social/i],
+//       css_classes: ["phone", "mobile", "tel", "contact-number"],
+//       data_attributes: ["phone", "mobile", "tel"],
+//       autocomplete: ["tel"],
+//       score_threshold: 5,
+//       force_threshold: 7,
+//     },
+
+//     website: {
+//       html_type: ["url", "text"],
+//       positive_patterns: [
+//         /\bwebsite\b/i,
+//         /\bhomepage\b/i,
+//         /\bsite\b/i,
+//         /\bweb[_\s-]?url\b/i,
+//         /\burl\b/i,
+//       ],
+//       negative_patterns: [/email/i, /social/i, /facebook/i, /twitter/i],
+//       css_classes: ["website", "homepage", "url", "web-url"],
+//       data_attributes: ["website", "url"],
+//       autocomplete: ["url"],
+//       score_threshold: 6,
+//       force_threshold: 9,
+//     },
+
+//     address: {
+//       html_type: ["text", "textarea"],
+//       positive_patterns: [
+//         /\baddress\b/i,
+//         /\bstreet\b/i,
+//         /\baddr\b/i,
+//         /\blocation\b/i,
+//       ],
+//       negative_patterns: [/email/i, /url/i, /name/i, /social/i],
+//       css_classes: ["address", "street-address", "location"],
+//       data_attributes: ["address", "location"],
+//       autocomplete: ["street-address", "postal-address"],
+//       score_threshold: 5,
+//       force_threshold: 7,
+//     },
+
+//     // Social media specific patterns
+//     facebook: {
+//       html_type: ["text", "url"],
+//       positive_patterns: [
+//         /\bfacebook\b/i,
+//         /\bfb\b/i,
+//         /\bfacebook[_\s-]?url\b/i,
+//         /\bfacebook[_\s-]?profile\b/i,
+//         /\bfacebook[_\s-]?handle\b/i,
+//         /\bfacebook[_\s-]?link\b/i,
+//         /@facebook/i,
+//       ],
+//       negative_patterns: [
+//         /username/i,
+//         /email/i,
+//         /password/i,
+//         /twitter/i,
+//         /linkedin/i,
+//       ],
+//       css_classes: ["facebook", "fb", "social-facebook", "facebook-input"],
+//       data_attributes: ["facebook", "fb"],
+//       autocomplete: [],
+//       score_threshold: 5,
+//       force_threshold: 8,
+//     },
+
+//     twitter: {
+//       html_type: ["text", "url"],
+//       positive_patterns: [
+//         /\btwitter\b/i,
+//         /\bx\b/i,
+//         /\bformerly twitter\b/i,
+//         /\btwitter[_\s-]?url\b/i,
+//         /\btwitter[_\s-]?profile\b/i,
+//         /\btwitter[_\s-]?handle\b/i,
+//         /\btwitter[_\s-]?link\b/i,
+//         /@twitter/i,
+//       ],
+//       negative_patterns: [
+//         /username/i,
+//         /email/i,
+//         /password/i,
+//         /facebook/i,
+//         /linkedin/i,
+//       ],
+//       css_classes: ["twitter", "x-twitter", "social-twitter"],
+//       data_attributes: ["twitter", "x"],
+//       autocomplete: [],
+//       score_threshold: 5,
+//       force_threshold: 8,
+//     },
+
+//     linkedin: {
+//       html_type: ["text", "url"],
+//       positive_patterns: [
+//         /\blinkedin\b/i,
+//         /\blinked[_\s-]?in\b/i,
+//         /\blinkedin[_\s-]?url\b/i,
+//         /\blinkedin[_\s-]?profile\b/i,
+//         /\blinkedin[_\s-]?handle\b/i,
+//         /\blinkedin[_\s-]?link\b/i,
+//       ],
+//       negative_patterns: [/username/i, /email/i, /password/i],
+//       css_classes: ["linkedin", "social-linkedin"],
+//       data_attributes: ["linkedin"],
+//       autocomplete: [],
+//       score_threshold: 5,
+//       force_threshold: 8,
+//     },
+
+//     instagram: {
+//       html_type: ["text", "url"],
+//       positive_patterns: [
+//         /\binstagram\b/i,
+//         /\big\b/i,
+//         /\binstagram[_\s-]?url\b/i,
+//         /\binstagram[_\s-]?profile\b/i,
+//         /\binstagram[_\s-]?handle\b/i,
+//         /\binstagram[_\s-]?link\b/i,
+//         /@instagram/i,
+//       ],
+//       negative_patterns: [/username/i, /email/i, /password/i],
+//       css_classes: ["instagram", "ig", "social-instagram"],
+//       data_attributes: ["instagram", "ig"],
+//       autocomplete: [],
+//       score_threshold: 5,
+//       force_threshold: 8,
+//     },
+
+//     youtube: {
+//       html_type: ["text", "url"],
+//       positive_patterns: [
+//         /\byoutube\b/i,
+//         /\byt\b/i,
+//         /\byoutube[_\s-]?url\b/i,
+//         /\byoutube[_\s-]?profile\b/i,
+//         /\byoutube[_\s-]?handle\b/i,
+//         /\byoutube[_\s-]?link\b/i,
+//         /\byoutube[_\s-]?channel\b/i,
+//       ],
+//       negative_patterns: [/username/i, /email/i, /password/i],
+//       css_classes: ["youtube", "yt", "social-youtube"],
+//       data_attributes: ["youtube", "yt"],
+//       autocomplete: [],
+//       score_threshold: 5,
+//       force_threshold: 8,
+//     },
+
+//     discord: {
+//       html_type: ["text"],
+//       positive_patterns: [
+//         /\bdiscord\b/i,
+//         /\bdiscord[_\s-]?id\b/i,
+//         /\bdiscord[_\s-]?user\b/i,
+//       ],
+//       negative_patterns: [/username/i, /email/i, /password/i],
+//       css_classes: ["discord", "social-discord"],
+//       data_attributes: ["discord"],
+//       autocomplete: [],
+//       score_threshold: 5,
+//       force_threshold: 8,
+//     },
+
+//     bluesky: {
+//       html_type: ["text", "url"],
+//       positive_patterns: [
+//         /\bbluesky\b/i,
+//         /\bbluesky[_\s-]?handle\b/i,
+//         /\bbluesky[_\s-]?profile\b/i,
+//       ],
+//       negative_patterns: [/username/i, /email/i, /password/i],
+//       css_classes: ["bluesky", "social-bluesky"],
+//       data_attributes: ["bluesky"],
+//       autocomplete: [],
+//       score_threshold: 5,
+//       force_threshold: 8,
+//     },
+
+//     mastodon: {
+//       html_type: ["text", "url"],
+//       positive_patterns: [
+//         /\bmastodon\b/i,
+//         /\bmastodon[_\s-]?handle\b/i,
+//         /\bmastodon[_\s-]?profile\b/i,
+//       ],
+//       negative_patterns: [/username/i, /email/i, /password/i],
+//       css_classes: ["mastodon", "social-mastodon"],
+//       data_attributes: ["mastodon"],
+//       autocomplete: [],
+//       score_threshold: 5,
+//       force_threshold: 8,
+//     },
+
+//     github: {
+//       html_type: ["text", "url"],
+//       positive_patterns: [
+//         /\bgithub\b/i,
+//         /\bgithub[_\s-]?username\b/i,
+//         /\bgithub[_\s-]?profile\b/i,
+//       ],
+//       negative_patterns: [/username/i, /email/i, /password/i],
+//       css_classes: ["github", "social-github"],
+//       data_attributes: ["github"],
+//       autocomplete: [],
+//       score_threshold: 5,
+//       force_threshold: 8,
+//     },
+
+//     orcid: {
+//       html_type: ["text"],
+//       positive_patterns: [/\borcid\b/i, /\borcid[_\s-]?id\b/i],
+//       negative_patterns: [/username/i, /email/i, /password/i, /name/i],
+//       css_classes: ["orcid", "social-orcid"],
+//       data_attributes: ["orcid"],
+//       autocomplete: [],
+//       score_threshold: 5,
+//       force_threshold: 8,
+//     },
+
+//     google: {
+//       html_type: ["text", "url"],
+//       positive_patterns: [
+//         /\bgoogle\b/i,
+//         /\bgoogle\+\b/i,
+//         /\bgoogle[_\s-]?plus\b/i,
+//         /\bgoogle[_\s-]?profile\b/i,
+//       ],
+//       negative_patterns: [/username/i, /email/i, /password/i],
+//       css_classes: ["google", "google-plus", "social-google"],
+//       data_attributes: ["google", "google-plus"],
+//       autocomplete: [],
+//       score_threshold: 5,
+//       force_threshold: 8,
+//     },
+
+//     description: {
+//       html_type: ["text", "textarea"],
+//       positive_patterns: [
+//         /\bdescription\b/i,
+//         /\bbio\b/i,
+//         /\babout\b/i,
+//         /\bsummary\b/i,
+//         /\bprofile[_\s-]?text\b/i,
+//       ],
+//       negative_patterns: [/name/i, /email/i, /url/i],
+//       css_classes: ["description", "bio", "about", "summary"],
+//       data_attributes: ["description", "bio"],
+//       autocomplete: [],
+//       score_threshold: 5,
+//       force_threshold: 7,
+//     },
+//   };
+
+//   // Calculate field detection score
+//   function calculateFieldScore(context, fieldType) {
+//     const config = FIELD_PATTERNS[fieldType];
+//     if (!config) return 0;
+
+//     let score = 0;
+//     const searchText = [
+//       context.label,
+//       context.name,
+//       context.id,
+//       context.placeholder,
+//       context.ariaLabel,
+//       context.title,
+//       context.siblingText,
+//       context.parentText,
+//       context.className,
+//       context.dataTestId,
+//       context.dataField,
+//       context.dataType,
+//       context.nearbyText,
+//     ]
+//       .join(" ")
+//       .toLowerCase();
+
+//     // HTML type match (highest priority)
+//     if (config.html_type && config.html_type.includes(context.type)) {
+//       score += 20; // Increased weight for type match
+//     }
+
+//     // Autocomplete attribute match
+//     if (
+//       config.autocomplete &&
+//       config.autocomplete.some((ac) => context.autocomplete.includes(ac))
+//     ) {
+//       score += 15; // Increased weight
+//     }
+
+//     // Positive pattern matching with weighted positions
+//     config.positive_patterns?.forEach((pattern) => {
+//       if (pattern.test(context.label)) score += 12;
+//       if (pattern.test(context.name)) score += 10;
+//       if (pattern.test(context.id)) score += 10;
+//       if (pattern.test(context.placeholder)) score += 8;
+//       if (pattern.test(context.ariaLabel)) score += 8;
+//       if (pattern.test(context.dataTestId)) score += 6;
+//       if (pattern.test(context.className)) score += 5;
+//       if (pattern.test(context.siblingText)) score += 4;
+//       if (pattern.test(context.parentText)) score += 3;
+//       if (pattern.test(context.nearbyText)) score += 2;
+//     });
+
+//     // CSS class matching
+//     config.css_classes?.forEach((cls) => {
+//       if (context.className.toLowerCase().includes(cls.toLowerCase()))
+//         score += 7;
+//     });
+
+//     // Data attribute matching
+//     config.data_attributes?.forEach((attr) => {
+//       if (
+//         context.dataField.toLowerCase().includes(attr.toLowerCase()) ||
+//         context.dataType.toLowerCase().includes(attr.toLowerCase())
+//       )
+//         score += 9;
+//     });
+
+//     // Negative pattern penalties (stronger penalties)
+//     config.negative_patterns?.forEach((pattern) => {
+//       if (pattern.test(searchText)) score -= 20; // Stronger penalty to avoid mismatches
+//     });
+
+//     return score;
+//   }
+
+//   // Multi-signal check for sensitive fields like username
+//   function countSignals(context, fieldType) {
+//     let signals = 0;
+//     const config = FIELD_PATTERNS[fieldType];
+//     if (!config) return 0;
+
+//     // Count distinct matches
+//     if (config.html_type?.includes(context.type)) signals++;
+//     if (config.autocomplete?.some((ac) => context.autocomplete.includes(ac)))
+//       signals++;
+//     config.positive_patterns?.forEach((pattern) => {
+//       if (
+//         pattern.test(context.label) ||
+//         pattern.test(context.name) ||
+//         pattern.test(context.id) ||
+//         pattern.test(context.placeholder) ||
+//         pattern.test(context.ariaLabel)
+//       )
+//         signals++;
+//     });
+//     config.css_classes?.forEach((cls) => {
+//       if (context.className.toLowerCase().includes(cls.toLowerCase()))
+//         signals++;
+//     });
+
+//     return signals;
+//   }
+
+//   // Detect field type using multi-strategy approach
+//   function detectFieldType(element, isForce = false) {
+//     if (!isVisible(element)) return null;
+
+//     const context = getAllContextData(element);
+
+//     // Skip non-input elements
+//     if (
+//       [
+//         "hidden",
+//         "submit",
+//         "button",
+//         "reset",
+//         "image",
+//         "file",
+//         "checkbox",
+//         "radio",
+//       ].includes(context.type)
+//     ) {
+//       return null;
+//     }
+
+//     let bestType = null;
+//     let bestScore = -1;
+
+//     // Test each field type
+//     for (const [fieldType, config] of Object.entries(FIELD_PATTERNS)) {
+//       const score = calculateFieldScore(context, fieldType);
+//       const threshold = isForce
+//         ? config.force_threshold || config.score_threshold + 2
+//         : config.score_threshold;
+
+//       // For sensitive fields, check min_signals
+//       const signals = countSignals(context, fieldType);
+//       const minSignals = isForce
+//         ? config.force_min_signals || config.min_signals || 2
+//         : config.min_signals || 1;
+//       if (signals < minSignals) continue;
+
+//       if (score >= threshold && score > bestScore) {
+//         bestScore = score;
+//         bestType = fieldType;
+//       }
+//     }
+
+//     // Special handling for textarea as description
+//     if (context.tag === "textarea" && !bestType) {
+//       const descScore = calculateFieldScore(context, "description");
+//       if (
+//         descScore >=
+//         (isForce
+//           ? FIELD_PATTERNS.description.force_threshold
+//           : FIELD_PATTERNS.description.score_threshold)
+//       ) {
+//         return "description";
+//       }
+//     }
+
+//     // Fallback only if no good match and force mode
+//     if (!bestType && isForce) {
+//       const labelText = context.label.toLowerCase();
+//       if (
+//         labelText.includes("name") &&
+//         !labelText.includes("user") &&
+//         !labelText.includes("first") &&
+//         !labelText.includes("last")
+//       ) {
+//         return "fullname";
+//       }
+//     }
+
+//     if (bestType) {
+//       console.log(
+//         `Field detection: ${element.tagName}[${
+//           element.name || element.id || "unnamed"
+//         }] -> ${bestType} (score: ${bestScore}, signals: ${countSignals(
+//           context,
+//           bestType
+//         )})`
+//       );
+//     }
+//     return bestType;
+//   }
+
+//   // ---------- Fill Logic ----------
+//   function alreadyFilled(el) {
+//     try {
+//       if (el.dataset?.rowfiller === "filled") return true;
+//       if (el.getAttribute?.("contenteditable") === "true") {
+//         return !!el.innerText?.trim();
+//       }
+//       return !!el.value?.trim();
+//     } catch (e) {
+//       return false;
+//     }
+//   }
+
+//   function shouldSkipFill(element, fieldType, value, isForce) {
+//     // Always skip if not visible
+//     if (!isVisible(element)) return true;
+
+//     // In normal mode, skip if already filled
+//     if (!isForce && alreadyFilled(element)) return true;
+
+//     // In force mode, validate if current value is plausible, but force overwrite if mismatch
+//     if (isForce && alreadyFilled(element)) {
+//       const currentValue = element.value?.trim() || "";
+//       switch (fieldType) {
+//         case "email":
+//           return looksLikeEmail(currentValue); // Skip only if current is valid email
+//         case "username":
+//           return looksLikeUsername(currentValue);
+//         case "website":
+//           return looksLikeUrl(currentValue);
+//         case "phone":
+//           return looksLikePhone(currentValue);
+//         case "facebook":
+//         case "twitter":
+//         case "linkedin":
+//         case "instagram":
+//         case "youtube":
+//           return (
+//             looksLikeUrl(currentValue) || looksLikeSocialHandle(currentValue)
+//           );
+//         default:
+//           return currentValue.length > 5; // Skip if substantial content
+//       }
+//     }
+
+//     return false;
+//   }
+
+//   function fillElement(element, fieldType, value, isForce = false) {
+//     try {
+//       if (shouldSkipFill(element, fieldType, value, isForce)) return false;
+//       if (!value) return false;
+
+//       const context = getAllContextData(element);
+
+//       // Strict type-specific validation, relaxed in force mode for 100% fill guarantee
+//       if (!isForce) {
+//         switch (fieldType) {
+//           case "email":
+//             if (
+//               !looksLikeEmail(value) ||
+//               context.tag === "textarea" ||
+//               context.type === "url"
+//             )
+//               return false;
+//             break;
+//           case "username":
+//             if (
+//               !looksLikeUsername(value) ||
+//               ["email", "tel", "url"].includes(context.type)
+//             )
+//               return false;
+//             break;
+//           case "website":
+//             if (!looksLikeUrl(value)) return false;
+//             break;
+//           case "phone":
+//             if (!looksLikePhone(value)) return false;
+//             break;
+//           case "facebook":
+//           case "twitter":
+//           case "linkedin":
+//           case "instagram":
+//           case "youtube":
+//             if (!looksLikeUrl(value) && !looksLikeSocialHandle(value))
+//               return false;
+//             break;
+//         }
+//       } else {
+//         // In force mode, minimal checks to ensure compatibility
+//         if (
+//           fieldType === "email" &&
+//           (context.tag === "textarea" || context.type === "url")
+//         )
+//           return false;
+//         if (
+//           fieldType === "username" &&
+//           ["email", "tel", "url"].includes(context.type)
+//         )
+//           return false;
+//       }
+
+//       // Handle select elements
+//       if (context.tag === "select") {
+//         const option = Array.from(element.options).find(
+//           (opt) =>
+//             opt.value?.toLowerCase() === value.toLowerCase() ||
+//             opt.text?.toLowerCase() === value.toLowerCase()
+//         );
+//         if (option) {
+//           element.value = option.value;
+//           element.dispatchEvent(new Event("change", { bubbles: true }));
+//           element.dataset.rowfiller = "filled";
+//           return true;
+//         }
+//         return false;
+//       }
+
+//       // Handle contenteditable
+//       if (element.getAttribute?.("contenteditable") === "true") {
+//         try {
+//           if (document.execCommand) {
+//             document.execCommand("insertText", false, value);
+//           } else {
+//             element.innerText = value;
+//           }
+//         } catch (e) {
+//           element.innerText = value;
+//         }
+//         element.dataset.rowfiller = "filled";
+//         return true;
+//       }
+
+//       // Fill regular input/textarea
+//       setNativeValue(element, value);
+//       element.dataset.rowfiller = "filled";
+
+//       console.log(`✅ Filled ${fieldType}: ${value} (force: ${isForce})`);
+//       return true;
+//     } catch (error) {
+//       console.warn("Fill error:", error);
+//       return false;
+//     }
+//   }
+
+//   // ---------- Profile Data Processing ----------
+//   function prepareProfileData(profile) {
+//     const p = profile.profile || profile || {};
+//     const first = p.firstname || p.firstName || "";
+//     const last = p.lastname || p.lastName || "";
+//     const fullname =
+//       p.fullname || [first, last].filter(Boolean).join(" ").trim() || "";
+//     const password =
+//       p.activePassword === "submissionPassword"
+//         ? p.submissionPassword || ""
+//         : p.emailPassword || "";
+
+//     return {
+//       firstname: first,
+//       lastname: last,
+//       fullname: fullname,
+//       username: p.username || "",
+//       email: p.email || p.submissionEmail || "",
+//       businessEmail: p.businessEmail || "",
+//       password: password,
+//       phone: p.phone || "",
+//       website: p.website || "",
+//       facebook: p.facebook || "",
+//       linkedin: p.linkedin || "",
+//       instagram: p.instagram || "",
+//       twitter: p.twitter || "",
+//       youtube: p.youtube || "",
+//       description: p.description || p.bio || "",
+//       address: p.address || "",
+//       city: p.city || "",
+//       state: p.state || "",
+//       postcode: p.postcode || "",
+//       country: p.country || "",
+//       location: p.location || "",
+//       title: p.title || "",
+//       category: p.category || "",
+//       subcategory: p.subcategory || "",
+//     };
+//   }
+
+//   // ---------- Main Fill Function ----------
+//   function performFill(profile, isForce = false) {
+//     if (!profile) return 0;
+
+//     const profileData = prepareProfileData(profile);
+//     const elements = Array.from(
+//       document.querySelectorAll(
+//         'input, textarea, select, [contenteditable="true"]'
+//       )
+//     );
+
+//     // Sort by position (top to bottom, left to right) for natural filling order
+//     elements.sort((a, b) => {
+//       try {
+//         const rectA = a.getBoundingClientRect();
+//         const rectB = b.getBoundingClientRect();
+//         return rectA.top - rectB.top || rectA.left - rectB.left;
+//       } catch (e) {
+//         return 0;
+//       }
+//     });
+
+//     let fillCount = 0;
+//     const filledTypes = new Set();
+//     const processedElements = new Set();
+
+//     console.log(
+//       `Starting fill process (force: ${isForce}) with ${elements.length} elements`
+//     );
+
+//     for (const element of elements) {
+//       try {
+//         if (processedElements.has(element)) continue;
+//         if (!isVisible(element)) continue;
+
+//         const fieldType = detectFieldType(element, isForce);
+//         if (!fieldType) continue;
+
+//         // Prevent duplicate fills in non-force mode, except for allowDuplicates
+//         const allowDuplicates = [
+//           "facebook",
+//           "linkedin",
+//           "instagram",
+//           "twitter",
+//           "youtube",
+//           "description",
+//         ];
+//         if (
+//           !isForce &&
+//           filledTypes.has(fieldType) &&
+//           !allowDuplicates.includes(fieldType)
+//         ) {
+//           continue;
+//         }
+
+//         const value = profileData[fieldType];
+//         if (!value) continue;
+
+//         const success = fillElement(element, fieldType, value, isForce);
+//         if (success) {
+//           fillCount++;
+//           filledTypes.add(fieldType);
+//           processedElements.add(element);
+//         }
+//       } catch (error) {
+//         console.warn("Element processing error:", error);
+//       }
+//     }
+
+//     console.log(
+//       `✅ Fill completed: ${fillCount} fields filled (force: ${isForce})`
+//     );
+//     return fillCount;
+//   }
+
+//   // ---------- Message Handling ----------
+//   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//     if (!message) {
+//       sendResponse({ ok: false, error: "no_message" });
+//       return true;
+//     }
+
+//     if (
+//       ["autofillProfile", "autofillAuth", "autofill"].includes(message.action)
+//     ) {
+//       chrome.storage.local.get(["autofillEnabled", "profile"], (result) => {
+//         const enabled = result?.autofillEnabled !== false;
+//         if (!enabled) {
+//           sendResponse({ ok: false, filled: 0, error: "disabled" });
+//           return;
+//         }
+
+//         const profile = message.profile || result?.profile;
+//         if (!profile) {
+//           sendResponse({ ok: false, filled: 0, error: "no_profile" });
+//           return;
+//         }
+
+//         try {
+//           const filled = performFill(profile, !!message.force);
+//           sendResponse({
+//             ok: filled > 0,
+//             filled: filled,
+//             force: !!message.force,
+//           });
+//         } catch (error) {
+//           console.error("Autofill error:", error);
+//           sendResponse({ ok: false, filled: 0, error: error.message });
+//         }
+//       });
+//       return true;
+//     }
+
+//     if (message.action === "toggleAutofill") {
+//       sendResponse({ ok: true, enabled: !!message.enabled });
+//       return;
+//     }
+
+//     sendResponse({ ok: false, error: "unknown_action" });
+//     return;
+//   });
+
+//   // ---------- Auto-run Logic ----------
+//   const autoFill = debounce(() => {
+//     chrome.storage.local.get(["autofillEnabled", "profile"], (result) => {
+//       const enabled = result?.autofillEnabled !== false;
+//       const profile = result?.profile;
+//       if (enabled && profile) {
+//         try {
+//           performFill(profile, false);
+//         } catch (error) {
+//           console.warn("Auto-fill error:", error);
+//         }
+//       }
+//     });
+//   }, 800);
+
+//   // Initial runs with delays for dynamic pages
+//   setTimeout(autoFill, 1000);
+//   setTimeout(autoFill, 2500);
+//   setTimeout(autoFill, 5000); // Extra delay for slower loads
+
+//   // Observe DOM changes for dynamic forms
+//   if (typeof MutationObserver !== "undefined") {
+//     const observer = new MutationObserver(
+//       debounce(() => {
+//         chrome.storage.local.get(["autofillEnabled", "profile"], (result) => {
+//           if (result?.autofillEnabled !== false && result?.profile) {
+//             try {
+//               performFill(result.profile, false);
+//             } catch (error) {
+//               console.warn("Observer fill error:", error);
+//             }
+//           }
+//         });
+//       }, 1000)
+//     );
+
+//     try {
+//       if (document.body) {
+//         observer.observe(document.body, {
+//           childList: true,
+//           subtree: true,
+//           attributes: true,
+//         });
+//       }
+//     } catch (error) {
+//       console.warn("Observer setup error:", error);
+//     }
+//   }
+
+//   console.log("RowFiller v6.4 Enhanced System Ready");
+// })();
+
+// content/autofill.js (v6.5) - Universal Strict Matching with Ambiguity Check and Higher Thresholds
 (function () {
-  if (window.__RowFiller_autofill_v5_installed) return;
-  window.__RowFiller_autofill_v5_installed = true;
-  console.log("🔑 content/autofill.js v5.0 loaded (Multi-Strategy Detection)");
+  if (window.__RowFiller_autofill_v6_installed) return;
+  window.__RowFiller_autofill_v6_installed = true;
+  console.log(
+    "🔑 content/autofill.js v6.5 loaded (Strict Matching with Ambiguity Resolution)"
+  );
 
   // ---------- Core Helpers ----------
   function debounce(fn, wait) {
     let t = null;
-    return function () { clearTimeout(t); t = setTimeout(() => fn.apply(this, arguments), wait); };
+    return function () {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, arguments), wait);
+    };
   }
 
   function setNativeValue(el, value) {
@@ -3875,7 +5640,9 @@
       if (desc && desc.set) desc.set.call(el, value);
       else el.value = value;
     } catch (e) {
-      try { el.value = value; } catch (e2) {}
+      try {
+        el.value = value;
+      } catch (e2) {}
     }
     el.dispatchEvent(new Event("input", { bubbles: true }));
     el.dispatchEvent(new Event("change", { bubbles: true }));
@@ -3886,303 +5653,819 @@
     try {
       if (!el || el.disabled || el.hidden || el.readOnly) return false;
       const style = getComputedStyle(el);
-      return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+      return (
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        style.opacity !== "0"
+      );
     } catch (e) {
-      return !!(el.offsetParent || el.tagName === 'select');
+      return !!(el.offsetParent || el.tagName === "select");
     }
   }
 
-  // Enhanced validation helpers
-  function looksLikeEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
-  function looksLikeUrl(v) { return v && (/^https?:\/\//.test(v) || /\w+\.[a-z]{2,}/i.test(v)); }
-  function looksLikePhone(v) { return v && (v.match(/\d/g) || []).length >= 7; }
-  function looksLikeUsername(v) { return v && !v.includes('@') && !/\s/.test(v) && /^[A-Za-z0-9._\-]{2,}$/.test(v); }
+  // Stricter validation helpers
+  function looksLikeEmail(v) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); // Require dot in domain for stricter match
+  }
+  function looksLikeUrl(v) {
+    return v && (/^https?:\/\//.test(v) || /\w+\.[a-z]{2,}/i.test(v));
+  }
+  function looksLikePhone(v) {
+    return v && (v.match(/\d/g) || []).length >= 10; // Stricter: at least 10 digits
+  }
+  function looksLikeUsername(v) {
+    return (
+      v && !v.includes("@") && !/\s/.test(v) && /^[A-Za-z0-9._\-]{3,}$/.test(v) // Stricter: min 3 chars
+    );
+  }
+  function looksLikeSocialHandle(v) {
+    return v && (/^@/.test(v) || v.includes("/"));
+  }
 
   // ---------- Advanced Context Extraction ----------
   function getAllContextData(el) {
     const data = {
       element: el,
-      tag: el.tagName?.toLowerCase() || '',
-      type: el.type?.toLowerCase() || '',
-      name: el.name || '',
-      id: el.id || '',
-      className: el.className || '',
-      placeholder: el.placeholder || '',
-      title: el.title || '',
-      ariaLabel: el.getAttribute?.('aria-label') || '',
-      ariaLabelledBy: el.getAttribute?.('aria-labelledby') || '',
-      autocomplete: el.getAttribute?.('autocomplete') || '',
-      dataTestId: el.getAttribute?.('data-testid') || '',
-      dataField: el.getAttribute?.('data-field') || '',
-      dataType: el.getAttribute?.('data-type') || '',
-      label: '',
-      siblingText: '',
-      parentText: '',
-      nearbyText: ''
+      tag: el.tagName?.toLowerCase() || "",
+      type: el.type?.toLowerCase() || "",
+      name: el.name || "",
+      id: el.id || "",
+      className: el.className || "",
+      placeholder: el.placeholder || "",
+      title: el.title || "",
+      ariaLabel: el.getAttribute?.("aria-label") || "",
+      ariaLabelledBy: el.getAttribute?.("aria-labelledby") || "",
+      autocomplete: el.getAttribute?.("autocomplete") || "",
+      dataTestId: el.getAttribute?.("data-testid") || "",
+      dataField: el.getAttribute?.("data-field") || "",
+      dataType: el.getAttribute?.("data-type") || "",
+      label: "",
+      siblingText: "",
+      parentText: "",
+      nearbyText: "",
     };
 
     // Extract label relationships
     try {
       if (data.id) {
-        const label = document.querySelector(`label[for="${CSS.escape(data.id)}"]`);
-        if (label) data.label = label.innerText?.trim() || '';
+        const label = document.querySelector(
+          `label[for="${CSS.escape(data.id)}"]`
+        );
+        if (label) data.label = label.innerText?.trim() || "";
       }
-      
+
       // Check parent labels
       let parent = el.parentElement;
       for (let i = 0; i < 5 && parent; i++, parent = parent.parentElement) {
-        if (parent.tagName === 'LABEL') {
-          data.label = data.label || parent.innerText?.trim() || '';
+        if (parent.tagName === "LABEL") {
+          data.label = data.label || parent.innerText?.trim() || "";
           break;
         }
       }
 
       // Sibling text (previous/next elements)
       const prevSibling = el.previousElementSibling;
-      if (prevSibling && ['LABEL', 'SPAN', 'DIV', 'P'].includes(prevSibling.tagName)) {
-        data.siblingText = prevSibling.innerText?.trim() || '';
+      if (
+        prevSibling &&
+        ["LABEL", "SPAN", "DIV", "P"].includes(prevSibling.tagName)
+      ) {
+        data.siblingText = prevSibling.innerText?.trim() || "";
       }
 
       // Parent container text
       if (el.parentElement) {
         const parentTextNodes = Array.from(el.parentElement.childNodes)
-          .filter(n => n.nodeType === Node.TEXT_NODE)
-          .map(n => n.textContent?.trim())
+          .filter((n) => n.nodeType === Node.TEXT_NODE)
+          .map((n) => n.textContent?.trim())
           .filter(Boolean)
-          .join(' ');
+          .join(" ");
         data.parentText = parentTextNodes;
       }
 
       // Nearby text (within reasonable distance)
       try {
         const rect = el.getBoundingClientRect();
-        const nearby = Array.from(document.querySelectorAll('label, span, div, p'))
-          .filter(e => {
+        const nearby = Array.from(
+          document.querySelectorAll("label, span, div, p")
+        )
+          .filter((e) => {
             const eRect = e.getBoundingClientRect();
-            return Math.abs(eRect.top - rect.top) < 50 && Math.abs(eRect.left - rect.left) < 200;
+            return (
+              Math.abs(eRect.top - rect.top) < 50 &&
+              Math.abs(eRect.left - rect.left) < 200 &&
+              e !== el
+            );
           })
-          .map(e => e.innerText?.trim())
+          .map((e) => e.innerText?.trim())
           .filter(Boolean)
-          .join(' ');
+          .join(" ");
         data.nearbyText = nearby;
       } catch (e) {}
 
       // aria-labelledby reference
       if (data.ariaLabelledBy) {
         const ref = document.getElementById(data.ariaLabelledBy);
-        if (ref) data.label = data.label || ref.innerText?.trim() || '';
+        if (ref) data.label = data.label || ref.innerText?.trim() || "";
       }
-
     } catch (e) {
-      console.warn('Context extraction error:', e);
+      console.warn("Context extraction error:", e);
     }
 
     return data;
   }
 
-  // ---------- Multi-Strategy Field Detection ----------
+  // ---------- Multi-Strategy Field Detection with Higher Thresholds ----------
   const FIELD_PATTERNS = {
     email: {
-      html_type: ['email'],
+      html_type: ["email"],
       positive_patterns: [
-        /\bemail\b/i, /\be-?mail\b/i, /\bmail\b/i, /\bemail[_\s-]?address\b/i,
-        /\buser[_\s-]?email\b/i, /\baccount[_\s-]?email\b/i, /\bemail[_\s-]?field\b/i
-      ],
-      negative_patterns: [/\b(business|work|company|office)\b/i, /confirm/i, /verify/i],
-      css_classes: [
-        'email', 'e-mail', 'user-email', 'account-email', 'login-email',
-        'input-email', 'field-email', 'form-email'
-      ],
-      data_attributes: ['email', 'user-email', 'account-email'],
-      autocomplete: ['email', 'username'],
-      score_threshold: 5
-    },
-    
-    username: {
-      html_type: ['text'],
-      positive_patterns: [
-        /^username$/i, /^user[_\s-]?name$/i, /\buser[_\s-]?id\b/i, /\buserid\b/i,
-        /\blogin\b/i, /\bhandle\b/i, /\baccount[_\s-]?name\b/i, /\buser\b/i
+        /\bemail\b/i,
+        /\be-?mail\b/i,
+        /\bmail\b/i,
+        /\bemail[_\s-]?address\b/i,
+        /\buser[_\s-]?email\b/i,
+        /\baccount[_\s-]?email\b/i,
+        /\bemail[_\s-]?field\b/i,
       ],
       negative_patterns: [
-        /email/i, /password/i, /facebook/i, /twitter/i, /linkedin/i, /instagram/i,
-        /youtube/i, /website/i, /url/i, /phone/i, /first/i, /last/i, /full/i,
-        /business/i, /company/i, /organization/i, /location/i, /address/i
+        /\b(business|work|company|office)\b/i,
+        /confirm/i,
+        /verify/i,
+        /social/i,
+        /facebook/i,
+        /twitter/i,
+        /linkedin/i,
+        /instagram/i,
+        /youtube/i,
+        /discord/i,
+        /bluesky/i,
+        /mastodon/i,
+        /github/i,
+        /orcid/i,
+        /google/i,
       ],
       css_classes: [
-        'username', 'user-name', 'user_name', 'login', 'handle', 'account-name',
-        'user-id', 'userid', 'login-field', 'user-field'
+        "email",
+        "e-mail",
+        "user-email",
+        "account-email",
+        "login-email",
+        "input-email",
+        "field-email",
+        "form-email",
       ],
-      data_attributes: ['username', 'user-name', 'login', 'handle'],
-      autocomplete: ['username'],
-      score_threshold: 8
+      data_attributes: ["email", "user-email", "account-email"],
+      autocomplete: ["email", "username"],
+      score_threshold: 8, // Increased
+      force_threshold: 12, // Increased
+    },
+
+    username: {
+      html_type: ["text"],
+      positive_patterns: [
+        /^username$/i,
+        /^user[_\s-]?name$/i,
+        /\buser[_\s-]?id\b/i,
+        /\buserid\b/i,
+        /\blogin\b/i,
+        /\bhandle\b/i,
+        /\baccount[_\s-]?name\b/i,
+        /\buser\b/i,
+      ],
+      negative_patterns: [
+        /email/i,
+        /password/i,
+        /facebook/i,
+        /twitter/i,
+        /linkedin/i,
+        /instagram/i,
+        /youtube/i,
+        /website/i,
+        /url/i,
+        /phone/i,
+        /first/i,
+        /last/i,
+        /full/i,
+        /business/i,
+        /company/i,
+        /organization/i,
+        /location/i,
+        /address/i,
+        /social/i,
+        /profile/i,
+        /link/i,
+        /discord/i,
+        /bluesky/i,
+        /mastodon/i,
+        /github/i,
+        /orcid/i,
+        /google/i,
+        /name/i, // Added
+      ],
+      css_classes: [
+        "username",
+        "user-name",
+        "user_name",
+        "login",
+        "handle",
+        "account-name",
+        "user-id",
+        "userid",
+        "login-field",
+        "user-field",
+      ],
+      data_attributes: ["username", "user-name", "login", "handle"],
+      autocomplete: ["username"],
+      score_threshold: 12, // Increased for stricter matching
+      force_threshold: 18, // Increased
+      min_signals: 3, // Increased
+      force_min_signals: 4, // Increased
     },
 
     password: {
-      html_type: ['password'],
+      html_type: ["password"],
       positive_patterns: [/\bpassword\b/i, /\bpass\b/i, /\bpwd\b/i],
-      negative_patterns: [/confirm/i, /verify/i, /retype/i, /repeat/i, /new/i, /current/i, /old/i],
-      css_classes: ['password', 'pass', 'pwd', 'login-password'],
-      data_attributes: ['password', 'pass'],
-      autocomplete: ['current-password', 'new-password'],
-      score_threshold: 5
+      negative_patterns: [
+        /confirm/i,
+        /verify/i,
+        /retype/i,
+        /repeat/i,
+        /new/i,
+        /current/i,
+        /old/i,
+      ],
+      css_classes: ["password", "pass", "pwd", "login-password"],
+      data_attributes: ["password", "pass"],
+      autocomplete: ["current-password", "new-password"],
+      score_threshold: 8, // Increased
+      force_threshold: 10, // Increased
     },
 
     firstname: {
-      html_type: ['text'],
+      html_type: ["text"],
       positive_patterns: [
-        /\bfirst[_\s-]?name\b/i, /\bgiven[_\s-]?name\b/i, /\bfname\b/i, /\bfirst\b/i
+        /\bfirst[_\s-]?name\b/i,
+        /\bgiven[_\s-]?name\b/i,
+        /\bfname\b/i,
+        /\bfirst\b/i,
       ],
-      negative_patterns: [],
-      css_classes: ['firstname', 'first-name', 'fname', 'given-name'],
-      data_attributes: ['firstname', 'first-name'],
-      autocomplete: ['given-name'],
-      score_threshold: 5
+      negative_patterns: [
+        /social/i,
+        /id/i,
+        /handle/i,
+        /profile/i,
+        /discord/i,
+        /bluesky/i,
+        /mastodon/i,
+        /github/i,
+        /orcid/i,
+        /google/i,
+        /x/i,
+        /twitter/i,
+        /linkedin/i,
+        /facebook/i,
+        /instagram/i,
+        /youtube/i,
+        /username/i, // Added
+      ],
+      css_classes: ["firstname", "first-name", "fname", "given-name"],
+      data_attributes: ["firstname", "first-name"],
+      autocomplete: ["given-name"],
+      score_threshold: 8, // Increased
+      force_threshold: 10, // Increased
     },
 
     lastname: {
-      html_type: ['text'],
+      html_type: ["text"],
       positive_patterns: [
-        /\blast[_\s-]?name\b/i, /\bsurname\b/i, /\bfamily[_\s-]?name\b/i, /\blname\b/i
+        /\blast[_\s-]?name\b/i,
+        /\bsurname\b/i,
+        /\bfamily[_\s-]?name\b/i,
+        /\blname\b/i,
       ],
-      negative_patterns: [],
-      css_classes: ['lastname', 'last-name', 'lname', 'surname', 'family-name'],
-      data_attributes: ['lastname', 'last-name'],
-      autocomplete: ['family-name'],
-      score_threshold: 5
+      negative_patterns: [
+        /social/i,
+        /id/i,
+        /handle/i,
+        /profile/i,
+        /discord/i,
+        /bluesky/i,
+        /mastodon/i,
+        /github/i,
+        /orcid/i,
+        /google/i,
+        /x/i,
+        /twitter/i,
+        /linkedin/i,
+        /facebook/i,
+        /instagram/i,
+        /youtube/i,
+        /username/i, // Added
+      ],
+      css_classes: ["lastname", "last-name", "lname", "surname", "family-name"],
+      data_attributes: ["lastname", "last-name"],
+      autocomplete: ["family-name"],
+      score_threshold: 8, // Increased
+      force_threshold: 10, // Increased
     },
 
     fullname: {
-      html_type: ['text'],
+      html_type: ["text"],
       positive_patterns: [
-        /\bfull[_\s-]?name\b/i, /\bdisplay[_\s-]?name\b/i, /^name$/i, /\breal[_\s-]?name\b/i
+        /\bfull[_\s-]?name\b/i,
+        /\bdisplay[_\s-]?name\b/i,
+        /^name$/i,
+        /\breal[_\s-]?name\b/i,
       ],
-      negative_patterns: [/first/i, /last/i, /user/i, /company/i],
-      css_classes: ['fullname', 'full-name', 'display-name', 'real-name'],
-      data_attributes: ['fullname', 'full-name'],
-      autocomplete: ['name'],
-      score_threshold: 5
+      negative_patterns: [
+        /first/i,
+        /last/i,
+        /user/i,
+        /company/i,
+        /social/i,
+        /id/i,
+        /handle/i,
+        /profile/i,
+        /discord/i,
+        /bluesky/i,
+        /mastodon/i,
+        /github/i,
+        /orcid/i,
+        /google/i,
+        /x/i,
+        /twitter/i,
+        /linkedin/i,
+        /facebook/i,
+        /instagram/i,
+        /youtube/i,
+        /username/i, // Added
+      ],
+      css_classes: ["fullname", "full-name", "display-name", "real-name"],
+      data_attributes: ["fullname", "full-name"],
+      autocomplete: ["name"],
+      score_threshold: 8, // Increased
+      force_threshold: 10, // Increased
     },
 
     phone: {
-      html_type: ['tel', 'text'],
+      html_type: ["tel", "text"],
       positive_patterns: [
-        /\bphone\b/i, /\bmobile\b/i, /\btel\b/i, /\bcontact\b/i, /\bnumber\b/i
+        /\bphone\b/i,
+        /\bmobile\b/i,
+        /\btel\b/i,
+        /\bcontact\b/i,
+        /\bnumber\b/i,
       ],
-      negative_patterns: [/fax/i, /office/i],
-      css_classes: ['phone', 'mobile', 'tel', 'contact-number'],
-      data_attributes: ['phone', 'mobile', 'tel'],
-      autocomplete: ['tel'],
-      score_threshold: 4
+      negative_patterns: [/fax/i, /office/i, /social/i, /email/i, /username/i], // Added
+      css_classes: ["phone", "mobile", "tel", "contact-number"],
+      data_attributes: ["phone", "mobile", "tel"],
+      autocomplete: ["tel"],
+      score_threshold: 7, // Increased
+      force_threshold: 9, // Increased
     },
 
     website: {
-      html_type: ['url', 'text'],
+      html_type: ["url", "text"],
       positive_patterns: [
-        /\bwebsite\b/i, /\bhomepage\b/i, /\bsite\b/i, /\bweb[_\s-]?url\b/i, /\burl\b/i
+        /\bwebsite\b/i,
+        /\bhomepage\b/i,
+        /\bsite\b/i,
+        /\bweb[_\s-]?url\b/i,
+        /\burl\b/i,
       ],
-      negative_patterns: [/email/i, /social/i],
-      css_classes: ['website', 'homepage', 'url', 'web-url'],
-      data_attributes: ['website', 'url'],
-      autocomplete: ['url'],
-      score_threshold: 5
-    }
+      negative_patterns: [
+        /email/i,
+        /social/i,
+        /facebook/i,
+        /twitter/i,
+        /username/i,
+      ], // Added
+      css_classes: ["website", "homepage", "url", "web-url"],
+      data_attributes: ["website", "url"],
+      autocomplete: ["url"],
+      score_threshold: 8, // Increased
+      force_threshold: 11, // Increased
+    },
+
+    address: {
+      html_type: ["text", "textarea"],
+      positive_patterns: [
+        /\baddress\b/i,
+        /\bstreet\b/i,
+        /\baddr\b/i,
+        /\blocation\b/i,
+      ],
+      negative_patterns: [/email/i, /url/i, /name/i, /social/i, /username/i], // Added
+      css_classes: ["address", "street-address", "location"],
+      data_attributes: ["address", "location"],
+      autocomplete: ["street-address", "postal-address"],
+      score_threshold: 7, // Increased
+      force_threshold: 9, // Increased
+    },
+
+    // Social media specific patterns (unchanged but thresholds increased)
+    facebook: {
+      html_type: ["text", "url"],
+      positive_patterns: [
+        /\bfacebook\b/i,
+        /\bfb\b/i,
+        /\bfacebook[_\s-]?url\b/i,
+        /\bfacebook[_\s-]?profile\b/i,
+        /\bfacebook[_\s-]?handle\b/i,
+        /\bfacebook[_\s-]?link\b/i,
+        /@facebook/i,
+      ],
+      negative_patterns: [
+        /username/i,
+        /email/i,
+        /password/i,
+        /twitter/i,
+        /linkedin/i,
+      ],
+      css_classes: ["facebook", "fb", "social-facebook", "facebook-input"],
+      data_attributes: ["facebook", "fb"],
+      autocomplete: [],
+      score_threshold: 7,
+      force_threshold: 10,
+    },
+
+    twitter: {
+      html_type: ["text", "url"],
+      positive_patterns: [
+        /\btwitter\b/i,
+        /\bx\b/i,
+        /\bformerly twitter\b/i,
+        /\btwitter[_\s-]?url\b/i,
+        /\btwitter[_\s-]?profile\b/i,
+        /\btwitter[_\s-]?handle\b/i,
+        /\btwitter[_\s-]?link\b/i,
+        /@twitter/i,
+      ],
+      negative_patterns: [
+        /username/i,
+        /email/i,
+        /password/i,
+        /facebook/i,
+        /linkedin/i,
+      ],
+      css_classes: ["twitter", "x-twitter", "social-twitter"],
+      data_attributes: ["twitter", "x"],
+      autocomplete: [],
+      score_threshold: 7,
+      force_threshold: 10,
+    },
+
+    linkedin: {
+      html_type: ["text", "url"],
+      positive_patterns: [
+        /\blinkedin\b/i,
+        /\blinked[_\s-]?in\b/i,
+        /\blinkedin[_\s-]?url\b/i,
+        /\blinkedin[_\s-]?profile\b/i,
+        /\blinkedin[_\s-]?handle\b/i,
+        /\blinkedin[_\s-]?link\b/i,
+      ],
+      negative_patterns: [/username/i, /email/i, /password/i],
+      css_classes: ["linkedin", "social-linkedin"],
+      data_attributes: ["linkedin"],
+      autocomplete: [],
+      score_threshold: 7,
+      force_threshold: 10,
+    },
+
+    instagram: {
+      html_type: ["text", "url"],
+      positive_patterns: [
+        /\binstagram\b/i,
+        /\big\b/i,
+        /\binstagram[_\s-]?url\b/i,
+        /\binstagram[_\s-]?profile\b/i,
+        /\binstagram[_\s-]?handle\b/i,
+        /\binstagram[_\s-]?link\b/i,
+        /@instagram/i,
+      ],
+      negative_patterns: [/username/i, /email/i, /password/i],
+      css_classes: ["instagram", "ig", "social-instagram"],
+      data_attributes: ["instagram", "ig"],
+      autocomplete: [],
+      score_threshold: 7,
+      force_threshold: 10,
+    },
+
+    youtube: {
+      html_type: ["text", "url"],
+      positive_patterns: [
+        /\byoutube\b/i,
+        /\byt\b/i,
+        /\byoutube[_\s-]?url\b/i,
+        /\byoutube[_\s-]?profile\b/i,
+        /\byoutube[_\s-]?handle\b/i,
+        /\byoutube[_\s-]?link\b/i,
+        /\byoutube[_\s-]?channel\b/i,
+      ],
+      negative_patterns: [/username/i, /email/i, /password/i],
+      css_classes: ["youtube", "yt", "social-youtube"],
+      data_attributes: ["youtube", "yt"],
+      autocomplete: [],
+      score_threshold: 7,
+      force_threshold: 10,
+    },
+
+    discord: {
+      html_type: ["text"],
+      positive_patterns: [
+        /\bdiscord\b/i,
+        /\bdiscord[_\s-]?id\b/i,
+        /\bdiscord[_\s-]?user\b/i,
+      ],
+      negative_patterns: [/username/i, /email/i, /password/i],
+      css_classes: ["discord", "social-discord"],
+      data_attributes: ["discord"],
+      autocomplete: [],
+      score_threshold: 7,
+      force_threshold: 10,
+    },
+
+    bluesky: {
+      html_type: ["text", "url"],
+      positive_patterns: [
+        /\bbluesky\b/i,
+        /\bbluesky[_\s-]?handle\b/i,
+        /\bbluesky[_\s-]?profile\b/i,
+      ],
+      negative_patterns: [/username/i, /email/i, /password/i],
+      css_classes: ["bluesky", "social-bluesky"],
+      data_attributes: ["bluesky"],
+      autocomplete: [],
+      score_threshold: 7,
+      force_threshold: 10,
+    },
+
+    mastodon: {
+      html_type: ["text", "url"],
+      positive_patterns: [
+        /\bmastodon\b/i,
+        /\bmastodon[_\s-]?handle\b/i,
+        /\bmastodon[_\s-]?profile\b/i,
+      ],
+      negative_patterns: [/username/i, /email/i, /password/i],
+      css_classes: ["mastodon", "social-mastodon"],
+      data_attributes: ["mastodon"],
+      autocomplete: [],
+      score_threshold: 7,
+      force_threshold: 10,
+    },
+
+    github: {
+      html_type: ["text", "url"],
+      positive_patterns: [
+        /\bgithub\b/i,
+        /\bgithub[_\s-]?username\b/i,
+        /\bgithub[_\s-]?profile\b/i,
+      ],
+      negative_patterns: [/username/i, /email/i, /password/i],
+      css_classes: ["github", "social-github"],
+      data_attributes: ["github"],
+      autocomplete: [],
+      score_threshold: 7,
+      force_threshold: 10,
+    },
+
+    orcid: {
+      html_type: ["text"],
+      positive_patterns: [/\borcid\b/i, /\borcid[_\s-]?id\b/i],
+      negative_patterns: [/username/i, /email/i, /password/i, /name/i],
+      css_classes: ["orcid", "social-orcid"],
+      data_attributes: ["orcid"],
+      autocomplete: [],
+      score_threshold: 7,
+      force_threshold: 10,
+    },
+
+    google: {
+      html_type: ["text", "url"],
+      positive_patterns: [
+        /\bgoogle\b/i,
+        /\bgoogle\+\b/i,
+        /\bgoogle[_\s-]?plus\b/i,
+        /\bgoogle[_\s-]?profile\b/i,
+      ],
+      negative_patterns: [/username/i, /email/i, /password/i],
+      css_classes: ["google", "google-plus", "social-google"],
+      data_attributes: ["google", "google-plus"],
+      autocomplete: [],
+      score_threshold: 7,
+      force_threshold: 10,
+    },
+
+    description: {
+      html_type: ["text", "textarea"],
+      positive_patterns: [
+        /\bdescription\b/i,
+        /\bbio\b/i,
+        /\babout\b/i,
+        /\bsummary\b/i,
+        /\bprofile[_\s-]?text\b/i,
+      ],
+      negative_patterns: [/name/i, /email/i, /url/i, /username/i], // Added
+      css_classes: ["description", "bio", "about", "summary"],
+      data_attributes: ["description", "bio"],
+      autocomplete: [],
+      score_threshold: 7,
+      force_threshold: 9,
+    },
   };
 
-  // Calculate field detection score
+  // Calculate field detection score (unchanged)
   function calculateFieldScore(context, fieldType) {
     const config = FIELD_PATTERNS[fieldType];
     if (!config) return 0;
 
     let score = 0;
     const searchText = [
-      context.label, context.name, context.id, context.placeholder,
-      context.ariaLabel, context.title, context.siblingText, context.parentText,
-      context.className, context.dataTestId, context.dataField, context.dataType
-    ].join(' ').toLowerCase();
+      context.label,
+      context.name,
+      context.id,
+      context.placeholder,
+      context.ariaLabel,
+      context.title,
+      context.siblingText,
+      context.parentText,
+      context.className,
+      context.dataTestId,
+      context.dataField,
+      context.dataType,
+      context.nearbyText,
+    ]
+      .join(" ")
+      .toLowerCase();
 
     // HTML type match (highest priority)
     if (config.html_type && config.html_type.includes(context.type)) {
-      score += 15;
+      score += 20;
     }
 
     // Autocomplete attribute match
-    if (config.autocomplete && config.autocomplete.some(ac => context.autocomplete.includes(ac))) {
-      score += 12;
+    if (
+      config.autocomplete &&
+      config.autocomplete.some((ac) => context.autocomplete.includes(ac))
+    ) {
+      score += 15;
     }
 
-    // Positive pattern matching
-    config.positive_patterns?.forEach(pattern => {
-      if (pattern.test(context.label)) score += 10;
-      if (pattern.test(context.name)) score += 8;
-      if (pattern.test(context.id)) score += 8;
-      if (pattern.test(context.placeholder)) score += 6;
-      if (pattern.test(context.ariaLabel)) score += 6;
-      if (pattern.test(context.dataTestId)) score += 5;
-      if (pattern.test(context.className)) score += 4;
-      if (pattern.test(context.siblingText)) score += 3;
-      if (pattern.test(context.parentText)) score += 2;
+    // Positive pattern matching with weighted positions
+    config.positive_patterns?.forEach((pattern) => {
+      if (pattern.test(context.label)) score += 12;
+      if (pattern.test(context.name)) score += 10;
+      if (pattern.test(context.id)) score += 10;
+      if (pattern.test(context.placeholder)) score += 8;
+      if (pattern.test(context.ariaLabel)) score += 8;
+      if (pattern.test(context.dataTestId)) score += 6;
+      if (pattern.test(context.className)) score += 5;
+      if (pattern.test(context.siblingText)) score += 4;
+      if (pattern.test(context.parentText)) score += 3;
+      if (pattern.test(context.nearbyText)) score += 2;
     });
 
     // CSS class matching
-    config.css_classes?.forEach(cls => {
-      if (context.className.toLowerCase().includes(cls)) score += 6;
+    config.css_classes?.forEach((cls) => {
+      if (context.className.toLowerCase().includes(cls.toLowerCase()))
+        score += 7;
     });
 
     // Data attribute matching
-    config.data_attributes?.forEach(attr => {
-      if (context.dataField.toLowerCase().includes(attr) || 
-          context.dataType.toLowerCase().includes(attr)) score += 7;
+    config.data_attributes?.forEach((attr) => {
+      if (
+        context.dataField.toLowerCase().includes(attr.toLowerCase()) ||
+        context.dataType.toLowerCase().includes(attr.toLowerCase())
+      )
+        score += 9;
     });
 
-    // Negative pattern penalties
-    config.negative_patterns?.forEach(pattern => {
-      if (pattern.test(searchText)) score -= 10;
+    // Negative pattern penalties (stronger penalties)
+    config.negative_patterns?.forEach((pattern) => {
+      if (pattern.test(searchText)) score -= 25; // Even stronger penalty
     });
 
     return score;
   }
 
-  // Detect field type using multi-strategy approach
+  // Multi-signal check for sensitive fields like username (unchanged but thresholds used elsewhere)
+  function countSignals(context, fieldType) {
+    let signals = 0;
+    const config = FIELD_PATTERNS[fieldType];
+    if (!config) return 0;
+
+    // Count distinct matches
+    if (config.html_type?.includes(context.type)) signals++;
+    if (config.autocomplete?.some((ac) => context.autocomplete.includes(ac)))
+      signals++;
+    config.positive_patterns?.forEach((pattern) => {
+      if (
+        pattern.test(context.label) ||
+        pattern.test(context.name) ||
+        pattern.test(context.id) ||
+        pattern.test(context.placeholder) ||
+        pattern.test(context.ariaLabel)
+      )
+        signals++;
+    });
+    config.css_classes?.forEach((cls) => {
+      if (context.className.toLowerCase().includes(cls.toLowerCase()))
+        signals++;
+    });
+
+    return signals;
+  }
+
+  // Detect field type with ambiguity resolution (new algo for best match only)
   function detectFieldType(element, isForce = false) {
     if (!isVisible(element)) return null;
-    
+
     const context = getAllContextData(element);
-    
+
     // Skip non-input elements
-    if (['hidden', 'submit', 'button', 'reset', 'image', 'file', 'checkbox', 'radio'].includes(context.type)) {
+    if (
+      [
+        "hidden",
+        "submit",
+        "button",
+        "reset",
+        "image",
+        "file",
+        "checkbox",
+        "radio",
+      ].includes(context.type)
+    ) {
       return null;
     }
 
-    let bestType = null;
-    let bestScore = -1;
+    const scores = [];
 
     // Test each field type
     for (const [fieldType, config] of Object.entries(FIELD_PATTERNS)) {
       const score = calculateFieldScore(context, fieldType);
-      const threshold = isForce ? Math.max(3, config.score_threshold - 2) : config.score_threshold;
-      
-      if (score >= threshold && score > bestScore) {
-        bestScore = score;
-        bestType = fieldType;
+      const threshold = isForce
+        ? config.force_threshold || config.score_threshold + 2
+        : config.score_threshold;
+
+      // For sensitive fields, check min_signals
+      const signals = countSignals(context, fieldType);
+      const minSignals = isForce
+        ? config.force_min_signals || config.min_signals || 2
+        : config.min_signals || 1;
+      if (signals < minSignals) continue;
+
+      if (score >= threshold) {
+        scores.push({ type: fieldType, score, signals });
       }
     }
 
-    // Special handling for textarea
-    if (context.tag === 'textarea') {
-      const descScore = calculateFieldScore(context, 'description');
-      if (descScore >= 3) return 'description';
+    if (scores.length === 0) return null;
+
+    // Sort by score descending
+    scores.sort((a, b) => b.score - a.score);
+
+    // Ambiguity check: best must be at least 5 points higher than second best (relaxed in force mode)
+    const minDiff = isForce ? 3 : 5;
+    if (scores.length > 1 && scores[0].score - scores[1].score < minDiff) {
+      console.log(
+        `Ambiguous field: ${scores[0].type} (${scores[0].score}) vs ${scores[1].type} (${scores[1].score}) - skipping`
+      );
+      return null; // Skip if not clear best match
     }
 
-    // Fallback logic
-    if (!bestType) {
+    const bestType = scores[0].type;
+    const bestScore = scores[0].score;
+
+    // Special handling for textarea as description
+    if (context.tag === "textarea" && bestType !== "description") {
+      const descScore = calculateFieldScore(context, "description");
+      if (descScore > bestScore) {
+        return "description";
+      }
+    }
+
+    // Fallback only if no good match and force mode
+    if (!bestType && isForce) {
       const labelText = context.label.toLowerCase();
-      if (labelText.includes('name') && !labelText.includes('user') && !labelText.includes('first') && !labelText.includes('last')) {
-        return 'fullname';
+      if (
+        labelText.includes("name") &&
+        !labelText.includes("user") &&
+        !labelText.includes("first") &&
+        !labelText.includes("last")
+      ) {
+        return "fullname";
       }
     }
 
-    console.log(`Field detection: ${element.tagName}[${element.name || element.id || 'unnamed'}] -> ${bestType} (score: ${bestScore})`);
+    if (bestType) {
+      console.log(
+        `Field detection: ${element.tagName}[${
+          element.name || element.id || "unnamed"
+        }] -> ${bestType} (score: ${bestScore}, signals: ${scores[0].signals})`
+      );
+    }
     return bestType;
   }
 
@@ -4190,35 +6473,44 @@
   function alreadyFilled(el) {
     try {
       if (el.dataset?.rowfiller === "filled") return true;
-      if (el.getAttribute?.('contenteditable') === 'true') {
-        return !!(el.innerText?.trim());
+      if (el.getAttribute?.("contenteditable") === "true") {
+        return !!el.innerText?.trim();
       }
-      return !!(el.value?.trim());
+      return !!el.value?.trim();
     } catch (e) {
       return false;
     }
   }
 
   function shouldSkipFill(element, fieldType, value, isForce) {
-    // Skip if already filled and not in force mode
+    // Always skip if not visible
+    if (!isVisible(element)) return true;
+
+    // In normal mode, skip if already filled
     if (!isForce && alreadyFilled(element)) return true;
 
-    // In force mode, check if current value seems appropriate
+    // In force mode, validate if current value is plausible, but force overwrite if mismatch
     if (isForce && alreadyFilled(element)) {
-      const currentValue = element.value?.trim() || '';
-      
-      // Type-specific validation
+      const currentValue = element.value?.trim() || "";
       switch (fieldType) {
-        case 'email':
-          return looksLikeEmail(currentValue) && looksLikeEmail(value);
-        case 'username':
-          return looksLikeUsername(currentValue) && looksLikeUsername(value);
-        case 'website':
-          return looksLikeUrl(currentValue) && looksLikeUrl(value);
-        case 'phone':
-          return looksLikePhone(currentValue) && looksLikePhone(value);
+        case "email":
+          return looksLikeEmail(currentValue);
+        case "username":
+          return looksLikeUsername(currentValue);
+        case "website":
+          return looksLikeUrl(currentValue);
+        case "phone":
+          return looksLikePhone(currentValue);
+        case "facebook":
+        case "twitter":
+        case "linkedin":
+        case "instagram":
+        case "youtube":
+          return (
+            looksLikeUrl(currentValue) || looksLikeSocialHandle(currentValue)
+          );
         default:
-          return currentValue.length > 2; // Has substantial content
+          return currentValue.length > 5;
       }
     }
 
@@ -4231,64 +6523,93 @@
       if (!value) return false;
 
       const context = getAllContextData(element);
-      
-      // Type-specific validation
-      switch (fieldType) {
-        case 'email':
-          if (!looksLikeEmail(value)) return false;
-          if (context.tag === 'textarea' || context.type === 'url') return false;
-          break;
-        case 'username':
-          if (!looksLikeUsername(value)) return false;
-          if (['email', 'tel', 'url'].includes(context.type)) return false;
-          break;
-        case 'website':
-          if (!looksLikeUrl(value)) return false;
-          break;
-        case 'phone':
-          if (!looksLikePhone(value)) return false;
-          break;
+
+      // Strict type-specific validation, relaxed in force mode for 100% fill guarantee
+      if (!isForce) {
+        switch (fieldType) {
+          case "email":
+            if (
+              !looksLikeEmail(value) ||
+              context.tag === "textarea" ||
+              context.type === "url"
+            )
+              return false;
+            break;
+          case "username":
+            if (
+              !looksLikeUsername(value) ||
+              ["email", "tel", "url"].includes(context.type)
+            )
+              return false;
+            break;
+          case "website":
+            if (!looksLikeUrl(value)) return false;
+            break;
+          case "phone":
+            if (!looksLikePhone(value)) return false;
+            break;
+          case "facebook":
+          case "twitter":
+          case "linkedin":
+          case "instagram":
+          case "youtube":
+            if (!looksLikeUrl(value) && !looksLikeSocialHandle(value))
+              return false;
+            break;
+        }
+      } else {
+        // In force mode, minimal checks to ensure compatibility
+        if (
+          fieldType === "email" &&
+          (context.tag === "textarea" || context.type === "url")
+        )
+          return false;
+        if (
+          fieldType === "username" &&
+          ["email", "tel", "url"].includes(context.type)
+        )
+          return false;
       }
 
       // Handle select elements
-      if (context.tag === 'select') {
-        const option = Array.from(element.options).find(opt => 
-          opt.value?.toLowerCase() === value.toLowerCase() || 
-          opt.text?.toLowerCase() === value.toLowerCase()
+      if (context.tag === "select") {
+        const option = Array.from(element.options).find(
+          (opt) =>
+            opt.value?.toLowerCase() === value.toLowerCase() ||
+            opt.text?.toLowerCase() === value.toLowerCase()
         );
         if (option) {
           element.value = option.value;
-          element.dispatchEvent(new Event('change', { bubbles: true }));
-          element.dataset.rowfiller = 'filled';
+          element.dispatchEvent(new Event("change", { bubbles: true }));
+          element.dataset.rowfiller = "filled";
           return true;
         }
         return false;
       }
 
       // Handle contenteditable
-      if (element.getAttribute?.('contenteditable') === 'true') {
+      if (element.getAttribute?.("contenteditable") === "true") {
         try {
           if (document.execCommand) {
-            document.execCommand('insertText', false, value);
+            document.execCommand("insertText", false, value);
           } else {
             element.innerText = value;
           }
         } catch (e) {
           element.innerText = value;
         }
-        element.dataset.rowfiller = 'filled';
+        element.dataset.rowfiller = "filled";
         return true;
       }
 
       // Fill regular input/textarea
       setNativeValue(element, value);
-      element.dataset.rowfiller = 'filled';
-      
-      console.log(`✅ Filled ${fieldType}: ${value}`);
-      return true;
+      element.dataset.rowfiller = "filled";
 
+      console.log(`✅ Filled ${fieldType}: ${value} (force: ${isForce})`);
+      return true;
     } catch (error) {
-      console.warn('Fill error:', error);
+      console.warn("Fill error:", error);
       return false;
     }
   }
@@ -4296,37 +6617,40 @@
   // ---------- Profile Data Processing ----------
   function prepareProfileData(profile) {
     const p = profile.profile || profile || {};
-    const first = p.firstname || p.firstName || '';
-    const last = p.lastname || p.lastName || '';
-    const fullname = p.fullname || [first, last].filter(Boolean).join(' ').trim() || '';
-    const password = (p.activePassword === 'submissionPassword') ? 
-      (p.submissionPassword || '') : (p.emailPassword || '');
+    const first = p.firstname || p.firstName || "";
+    const last = p.lastname || p.lastName || "";
+    const fullname =
+      p.fullname || [first, last].filter(Boolean).join(" ").trim() || "";
+    const password =
+      p.activePassword === "submissionPassword"
+        ? p.submissionPassword || ""
+        : p.emailPassword || "";
 
     return {
       firstname: first,
       lastname: last,
       fullname: fullname,
-      username: p.username || '',
-      email: p.email || p.submissionEmail || '',
-      businessEmail: p.businessEmail || '',
+      username: p.username || "",
+      email: p.email || p.submissionEmail || "",
+      businessEmail: p.businessEmail || "",
       password: password,
-      phone: p.phone || '',
-      website: p.website || '',
-      facebook: p.facebook || '',
-      linkedin: p.linkedin || '',
-      instagram: p.instagram || '',
-      twitter: p.twitter || '',
-      youtube: p.youtube || '',
-      description: p.description || p.bio || '',
-      address: p.address || '',
-      city: p.city || '',
-      state: p.state || '',
-      postcode: p.postcode || '',
-      country: p.country || '',
-      location: p.location || '',
-      title: p.title || '',
-      category: p.category || '',
-      subcategory: p.subcategory || ''
+      phone: p.phone || "",
+      website: p.website || "",
+      facebook: p.facebook || "",
+      linkedin: p.linkedin || "",
+      instagram: p.instagram || "",
+      twitter: p.twitter || "",
+      youtube: p.youtube || "",
+      description: p.description || p.bio || "",
+      address: p.address || "",
+      city: p.city || "",
+      state: p.state || "",
+      postcode: p.postcode || "",
+      country: p.country || "",
+      location: p.location || "",
+      title: p.title || "",
+      category: p.category || "",
+      subcategory: p.subcategory || "",
     };
   }
 
@@ -4335,14 +6659,18 @@
     if (!profile) return 0;
 
     const profileData = prepareProfileData(profile);
-    const elements = Array.from(document.querySelectorAll('input, textarea, select, [contenteditable="true"]'));
+    const elements = Array.from(
+      document.querySelectorAll(
+        'input, textarea, select, [contenteditable="true"]'
+      )
+    );
 
-    // Sort by position (top to bottom, left to right)
+    // Sort by position (top to bottom, left to right) for natural filling order
     elements.sort((a, b) => {
       try {
         const rectA = a.getBoundingClientRect();
         const rectB = b.getBoundingClientRect();
-        return (rectA.top - rectB.top) || (rectA.left - rectB.left);
+        return rectA.top - rectB.top || rectA.left - rectB.left;
       } catch (e) {
         return 0;
       }
@@ -4352,7 +6680,9 @@
     const filledTypes = new Set();
     const processedElements = new Set();
 
-    console.log(`Starting fill process (force: ${isForce}) with ${elements.length} elements`);
+    console.log(
+      `Starting fill process (force: ${isForce}) with ${elements.length} elements`
+    );
 
     for (const element of elements) {
       try {
@@ -4362,9 +6692,20 @@
         const fieldType = detectFieldType(element, isForce);
         if (!fieldType) continue;
 
-        // In normal mode, avoid duplicate field types (except social media)
-        const allowDuplicates = ['facebook', 'linkedin', 'instagram', 'twitter', 'youtube', 'description'];
-        if (!isForce && filledTypes.has(fieldType) && !allowDuplicates.includes(fieldType)) {
+        // Prevent duplicate fills in non-force mode, except for allowDuplicates
+        const allowDuplicates = [
+          "facebook",
+          "linkedin",
+          "instagram",
+          "twitter",
+          "youtube",
+          "description",
+        ];
+        if (
+          !isForce &&
+          filledTypes.has(fieldType) &&
+          !allowDuplicates.includes(fieldType)
+        ) {
           continue;
         }
 
@@ -4377,98 +6718,112 @@
           filledTypes.add(fieldType);
           processedElements.add(element);
         }
-
       } catch (error) {
-        console.warn('Element processing error:', error);
+        console.warn("Element processing error:", error);
       }
     }
 
-    console.log(`✅ Fill completed: ${fillCount} fields filled (force: ${isForce})`);
+    console.log(
+      `✅ Fill completed: ${fillCount} fields filled (force: ${isForce})`
+    );
     return fillCount;
   }
 
   // ---------- Message Handling ----------
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!message) {
-      sendResponse({ ok: false, error: 'no_message' });
+      sendResponse({ ok: false, error: "no_message" });
       return true;
     }
 
-    if (['autofillProfile', 'autofillAuth', 'autofill'].includes(message.action)) {
-      chrome.storage.local.get(['autofillEnabled', 'profile'], (result) => {
+    if (
+      ["autofillProfile", "autofillAuth", "autofill"].includes(message.action)
+    ) {
+      chrome.storage.local.get(["autofillEnabled", "profile"], (result) => {
         const enabled = result?.autofillEnabled !== false;
         if (!enabled) {
-          sendResponse({ ok: false, filled: 0, error: 'disabled' });
+          sendResponse({ ok: false, filled: 0, error: "disabled" });
           return;
         }
 
         const profile = message.profile || result?.profile;
         if (!profile) {
-          sendResponse({ ok: false, filled: 0, error: 'no_profile' });
+          sendResponse({ ok: false, filled: 0, error: "no_profile" });
           return;
         }
 
         try {
           const filled = performFill(profile, !!message.force);
-          sendResponse({ ok: filled > 0, filled: filled, force: !!message.force });
+          sendResponse({
+            ok: filled > 0,
+            filled: filled,
+            force: !!message.force,
+          });
         } catch (error) {
-          console.error('Autofill error:', error);
+          console.error("Autofill error:", error);
           sendResponse({ ok: false, filled: 0, error: error.message });
         }
       });
       return true;
     }
 
-    if (message.action === 'toggleAutofill') {
+    if (message.action === "toggleAutofill") {
       sendResponse({ ok: true, enabled: !!message.enabled });
       return;
     }
 
-    sendResponse({ ok: false, error: 'unknown_action' });
+    sendResponse({ ok: false, error: "unknown_action" });
     return;
   });
 
   // ---------- Auto-run Logic ----------
   const autoFill = debounce(() => {
-    chrome.storage.local.get(['autofillEnabled', 'profile'], (result) => {
+    chrome.storage.local.get(["autofillEnabled", "profile"], (result) => {
       const enabled = result?.autofillEnabled !== false;
       const profile = result?.profile;
       if (enabled && profile) {
         try {
           performFill(profile, false);
         } catch (error) {
-          console.warn('Auto-fill error:', error);
+          console.warn("Auto-fill error:", error);
         }
       }
     });
   }, 800);
 
-  // Initial runs
+  // Initial runs with delays for dynamic pages
   setTimeout(autoFill, 1000);
   setTimeout(autoFill, 2500);
+  setTimeout(autoFill, 5000); // Extra delay for slower loads
 
-  // Observe DOM changes
-  if (typeof MutationObserver !== 'undefined') {
-    const observer = new MutationObserver(debounce(() => {
-      chrome.storage.local.get(['autofillEnabled', 'profile'], (result) => {
-        if (result?.autofillEnabled !== false && result?.profile) {
-          try {
-            performFill(result.profile, false);
-          } catch (error) {
-            console.warn('Observer fill error:', error);
+  // Observe DOM changes for dynamic forms
+  if (typeof MutationObserver !== "undefined") {
+    const observer = new MutationObserver(
+      debounce(() => {
+        chrome.storage.local.get(["autofillEnabled", "profile"], (result) => {
+          if (result?.autofillEnabled !== false && result?.profile) {
+            try {
+              performFill(result.profile, false);
+            } catch (error) {
+              console.warn("Observer fill error:", error);
+            }
           }
-        }
-      });
-    }, 1000));
+        });
+      }, 1000)
+    );
 
     try {
       if (document.body) {
-        observer.observe(document.body, { childList: true, subtree: true });
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+        });
       }
     } catch (error) {
-      console.warn('Observer setup error:', error);
+      console.warn("Observer setup error:", error);
     }
   }
 
-  console.log('RowFiller v5.0 Multi-Strategy System Ready');
+  console.log("RowFiller v6.5 Strict System Ready");
 })();
