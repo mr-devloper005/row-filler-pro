@@ -1,0 +1,155 @@
+[
+    {
+        "website":"adpromott.com",
+        "issue":"not filling name - in name feild please fill fullname",
+        "html":"<div class="authentication__form disbox">
+                                <div class="authentication__title">
+                                    <p class="title__text">Register an account for free</p>
+                                </div>
+                                <form name="register" id="register" action="https://adpromott.com/index.php" method="post" class="form"><input type="hidden" name="octoken" value="5eyfwxosrpyq">
+                                    <input type="hidden" name="page" value="register">
+                                    <input type="hidden" name="action" value="register_post">
+                                    <div class="form-group">
+                                        <div class="fa fa-user"></div>
+                                        <input id="s_name" type="text" name="s_name" value="" placeholder="Name *" class="form-control form-control__big">
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="fa fa-lock"></div>
+                                        <input id="s_password" type="password" name="s_password" value="" placeholder="Password *" class="form-control form-control__big valid" data-rowfiller="filled">
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="fa fa-lock"></div>
+                                        <input id="s_password2" type="password" name="s_password2" value="" placeholder="Re-type password *" class="form-control form-control__big valid" data-rowfiller="filled">
+                                    </div>
+                                    <p id="password-error" style="display:none;">
+                                        Passwords don't match.
+                                    </p>
+                                    <div class="form-group">
+                                        <div class="fa fa-envelope"></div>
+                                        <input id="s_email" type="text" name="s_email" value="" placeholder="E-mail *" class="form-control form-control__big valid" data-rowfiller="filled">
+										</div>
+										<div class="form-group">
+                                        <div class="fa fa-phone"></div>
+                                        <input id="s_phone_mobile" type="text" name="s_phone_mobile" value="" placeholder="Mobile Phone" class="form-control form-control__big valid" data-rowfiller="filled">
+										</div>
+									<div class="form-group">
+<div class="fa fa-user-plus"></div>
+                                                        <select name="b_company" id="b_company" class="form-control form-control__big">						
+								<option value="0">User</option>
+								<option value="1">Company</option>
+								</select>
+
+                                                </div>
+												<div class="form-group">
+												<p>* This field is required</p>
+												</div>
+                                        <!-- ANS SPECIAL FORM ENTRY -->
+<div id="ans-hp-form">
+  <input type="hidden" name="xcheckfield" value="ans">
+  <label for="whatSellA">What to sell</label><input value="greenTshirt" type="text" name="whatSellA" id="whatSellA"><br>
+  <label for="sellingToB">What to buy</label><input value="" type="text" name="sellingToB" id="sellingToB"><br>
+  <label for="userNameC">Stuff</label><input value="" type="text" name="userNameC" id="userNameC">
+  <label for="userAddressD">Name</label><input value="" type="text" name="userAddressD" id="userAddressD" class="valid" data-rowfiller="filled">
+  <label for="cityE">City</label><input value="" type="text" name="cityE" id="cityE" class="valid" data-rowfiller="filled">
+  <label for="yourAgeF">Fill</label><input value="" type="text" name="yourAgeF" id="yourAgeF">
+</div>
+
+<style>#ans-hp-form {overflow:hidden;width:1px;height:1px;float:left;background:transparent;max-width:1px;max-height:1px;}</style>
+
+<script>
+$(document).ready(function() {
+  var what = $('#whatSellA').val();
+  $('#sellingToB').val(what);
+  $('#yourAgeF').val((new Date).getFullYear());
+});
+</script>
+
+										<script type="text/javascript">
+                                                            var RecaptchaOptions = {
+                                                                theme : 'clean'
+                                                            };
+                                                        </script>
+
+                                                                            <div class="form-group" style="align:center">
+                                                                                    </div>
+                                                                            
+                                    <button class="btn btn-primary" type="submit" style="width: 200px">Create</button>
+                                </form>
+                            </div>"
+},
+    {
+        "website":"makerworld.com",
+        "issue":"not filling display name",
+        "html":"<div class="mw-css-11gjca4"><div class="mw-css-oymk47"><div class="mw-css-18x3xb0"><div class="mw-css-ztenx"><svg width="1em" height="1em" viewBox="0 0 12 12" fill="none"><path d="M4.39448 10L2.72828 8.66094C3.25793 8.04292 3.80966 7.4516 4.38345 6.88698C4.61149 6.65808 4.75494 6.51311 4.81379 6.45207C4.62989 6.42155 4.10391 6.29566 3.23586 6.07439C2.61057 5.91416 2.19862 5.7959 2 5.7196L2.65103 3.70529C3.61471 4.10968 4.4754 4.55603 5.2331 5.04435C5.05655 3.80067 4.96828 2.78588 4.96828 2H6.93241C6.93241 2.55699 6.8331 3.5794 6.63448 5.06724C6.78161 5.0062 7.09793 4.85742 7.58345 4.62089C8.24552 4.30806 8.85609 4.04101 9.41517 3.81974L10 5.89127C9.18345 6.08202 8.23816 6.26896 7.16414 6.45207L8.48828 7.99714C8.7531 8.30997 8.96276 8.56557 9.11724 8.76395L7.42897 9.91989L5.93931 7.36767C5.49057 8.1917 4.97563 9.06915 4.39448 10Z" fill="currentColor"></path></svg></div>Display Name<div aria-label="This is the primary name displayed to the public." class="mw-css-1jt57xl"><svg width="1em" height="1em" viewBox="0 0 16 16" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.9327 8.0013C13.9327 4.72441 11.2762 2.06797 7.99935 2.06797C4.72246 2.06797 2.06602 4.72441 2.06602 8.0013C2.06602 11.2782 4.72246 13.9346 7.99935 13.9346C11.2762 13.9346 13.9327 11.2782 13.9327 8.0013ZM15.3327 8.0013C15.3327 3.95121 12.0494 0.667969 7.99935 0.667969C3.94926 0.667969 0.666016 3.95121 0.666016 8.0013C0.666016 12.0514 3.94926 15.3346 7.99935 15.3346C12.0494 15.3346 15.3327 12.0514 15.3327 8.0013ZM7.9987 5.83594C8.45894 5.83594 8.83203 5.46284 8.83203 5.0026C8.83203 4.54237 8.45894 4.16927 7.9987 4.16927C7.53846 4.16927 7.16536 4.54237 7.16536 5.0026C7.16536 5.46284 7.53846 5.83594 7.9987 5.83594ZM8.66153 11.4111C8.62302 11.7426 8.34124 12 7.99935 12C7.65746 12 7.37568 11.7426 7.33717 11.4111L7.33268 11.3333L7.33268 7.33333L7.33717 7.25559C7.37568 6.92403 7.65746 6.66667 7.99935 6.66667C8.34124 6.66667 8.62302 6.92403 8.66153 7.25559L8.66602 7.33333V11.3333L8.66153 11.4111Z" fill="currentColor"></path></svg></div></div><div class="mw-css-0"><div class="MuiFormControl-root MuiFormControl-fullWidth MuiTextField-root mw-css-1nxb8ky"><div class="MuiInputBase-root MuiOutlinedInput-root MuiInputBase-colorPrimary MuiInputBase-fullWidth MuiInputBase-formControl mw-css-1djbrw1"><input aria-invalid="false" id=":Rad9hl9cmilamt66:" name="name" type="text" class="MuiInputBase-input MuiOutlinedInput-input mw-css-14ksno7" value="user_2260691161"><fieldset aria-hidden="true" class="MuiOutlinedInput-notchedOutline mw-css-1bl9ma3"><legend class="mw-css-w4cd9x"><span class="notranslate" aria-hidden="true">​</span></legend></fieldset></div></div><p class="MuiFormHelperText-root mw-css-inmc34"></p></div></div><div class="mw-css-oymk47"><div class="mw-css-18x3xb0"><div class="mw-css-ztenx"><svg width="1em" height="1em" viewBox="0 0 12 12" fill="none"><path d="M4.39448 10L2.72828 8.66094C3.25793 8.04292 3.80966 7.4516 4.38345 6.88698C4.61149 6.65808 4.75494 6.51311 4.81379 6.45207C4.62989 6.42155 4.10391 6.29566 3.23586 6.07439C2.61057 5.91416 2.19862 5.7959 2 5.7196L2.65103 3.70529C3.61471 4.10968 4.4754 4.55603 5.2331 5.04435C5.05655 3.80067 4.96828 2.78588 4.96828 2H6.93241C6.93241 2.55699 6.8331 3.5794 6.63448 5.06724C6.78161 5.0062 7.09793 4.85742 7.58345 4.62089C8.24552 4.30806 8.85609 4.04101 9.41517 3.81974L10 5.89127C9.18345 6.08202 8.23816 6.26896 7.16414 6.45207L8.48828 7.99714C8.7531 8.30997 8.96276 8.56557 9.11724 8.76395L7.42897 9.91989L5.93931 7.36767C5.49057 8.1917 4.97563 9.06915 4.39448 10Z" fill="currentColor"></path></svg></div>Username<div class="mw-css-1jt57xl"><svg width="1em" height="1em" viewBox="0 0 16 16" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.9327 8.0013C13.9327 4.72441 11.2762 2.06797 7.99935 2.06797C4.72246 2.06797 2.06602 4.72441 2.06602 8.0013C2.06602 11.2782 4.72246 13.9346 7.99935 13.9346C11.2762 13.9346 13.9327 11.2782 13.9327 8.0013ZM15.3327 8.0013C15.3327 3.95121 12.0494 0.667969 7.99935 0.667969C3.94926 0.667969 0.666016 3.95121 0.666016 8.0013C0.666016 12.0514 3.94926 15.3346 7.99935 15.3346C12.0494 15.3346 15.3327 12.0514 15.3327 8.0013ZM7.9987 5.83594C8.45894 5.83594 8.83203 5.46284 8.83203 5.0026C8.83203 4.54237 8.45894 4.16927 7.9987 4.16927C7.53846 4.16927 7.16536 4.54237 7.16536 5.0026C7.16536 5.46284 7.53846 5.83594 7.9987 5.83594ZM8.66153 11.4111C8.62302 11.7426 8.34124 12 7.99935 12C7.65746 12 7.37568 11.7426 7.33717 11.4111L7.33268 11.3333L7.33268 7.33333L7.33717 7.25559C7.37568 6.92403 7.65746 6.66667 7.99935 6.66667C8.34124 6.66667 8.62302 6.92403 8.66153 7.25559L8.66602 7.33333V11.3333L8.66153 11.4111Z" fill="currentColor"></path></svg></div></div><div class="mw-css-0"><div class="MuiFormControl-root MuiFormControl-fullWidth MuiTextField-root mw-css-1nxb8ky"><div class="MuiInputBase-root MuiOutlinedInput-root MuiInputBase-colorPrimary MuiInputBase-fullWidth MuiInputBase-formControl MuiInputBase-adornedStart mw-css-1itllg1"><div class="mw-css-utlqp9">@</div><input aria-invalid="false" id=":Radahl9cmilamt66:" name="handle" type="text" class="MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputAdornedStart mw-css-1wbrvaj" value="user_2260691161"><fieldset aria-hidden="true" class="MuiOutlinedInput-notchedOutline mw-css-1bl9ma3"><legend class="mw-css-w4cd9x"><span class="notranslate" aria-hidden="true">​</span></legend></fieldset></div></div><p class="MuiFormHelperText-root mw-css-inmc34"></p></div></div></div>"
+},
+    {
+        "website":"",
+        "issue":"",
+        "html":""
+},
+    {
+        "website":"",
+        "issue":"",
+        "html":""
+},
+    {
+        "website":"",
+        "issue":"",
+        "html":""
+},
+    {
+        "website":"",
+        "issue":"",
+        "html":""
+},
+    {
+        "website":"",
+        "issue":"",
+        "html":""
+},
+    {
+        "website":"",
+        "issue":"",
+        "html":""
+},
+    {
+        "website":"",
+        "issue":"",
+        "html":""
+},
+    {
+        "website":"",
+        "issue":"",
+        "html":""
+},
+    {
+        "website":"",
+        "issue":"",
+        "html":""
+},
+    {
+        "website":"",
+        "issue":"",
+        "html":""
+},
+    {
+        "website":"",
+        "issue":"",
+        "html":""
+},
+    {
+        "website":"",
+        "issue":"",
+        "html":""
+},
+    {
+        "website":"",
+        "issue":"",
+        "html":""
+},
+    {
+        "website":"",
+        "issue":"",
+        "html":""
+}
+]

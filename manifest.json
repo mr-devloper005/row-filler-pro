@@ -1,4 +1,4 @@
-{
+﻿{
   "manifest_version": 3,
   "name": "Hyper Fill",
   "description": "Automatically fills login / signup forms and supports content posting on multiple sites.",
@@ -33,9 +33,6 @@
     {
       "matches": ["<all_urls>"],
       "js": [
-        "content/utils.js",
-        "content/sites/pinterest.js",
-        "content/sites/medium.js",
         "content/index.js",
         "content/auth.js",
         "content/autofill.js"

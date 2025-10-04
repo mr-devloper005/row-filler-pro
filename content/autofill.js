@@ -1,4 +1,4 @@
-// // content/autofill.js
+﻿// // content/autofill.js
 // // Robust autofill that:
 // // - reads profile from chrome.storage.local (profile or separate keys)
 // // - uses native setter pattern for React/Angular compatibility
