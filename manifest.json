@@ -1,43 +1,32 @@
 ﻿{
   "manifest_version": 3,
-  "name": "Hyper Fill",
-  "description": "Automatically fills login / signup forms and supports content posting on multiple sites.",
-  "version": "5.0.0",
-
+  "name": "HyperFill",
+  "version": "7.1.0",
+  "description": "Side-panel autofill with unified fill.js, Excel import, and deep debug logs.",
+  "minimum_chrome_version": "114",
   "permissions": [
     "storage",
-    "scripting",
     "activeTab",
-    "tabs",
+    "scripting",
     "sidePanel",
-    "webNavigation"
+    "contextMenus"
   ],
-
-  "host_permissions": [
-    "<all_urls>"
-  ],
-
-  "action": {
-    "default_title": "Open RowFiller SidePanel"
-  },
-
-  "background": {
-    "service_worker": "background.js"
-  },
-
-  "side_panel": {
-    "default_path": "popup.html"
-  },
-
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "HyperFill" },
+  "side_panel": { "default_path": "panel.html" },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": [
-        "content/index.js",
-        "content/auth.js",
-        "content/autofill.js"
-      ],
-      "run_at": "document_idle"
+      "js": ["content/fill.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["xlsx.full.min.js"],
+      "matches": ["<all_urls>"]
     }
   ]
 }
