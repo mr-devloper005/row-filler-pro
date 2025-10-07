@@ -24,9 +24,6 @@
     }
   ],
   "web_accessible_resources": [
-    {
-      "resources": ["xlsx.full.min.js"],
-      "matches": ["<all_urls>"]
-    }
+    { "resources": ["xlsx.full.min.js"], "matches": ["<all_urls>"] }
   ]
 }

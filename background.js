@@ -1,4 +1,4 @@
-// // background.js
+﻿﻿// // background.js
 // console.log("🔧 RowFiller background.js starting");
 
 // // On install
